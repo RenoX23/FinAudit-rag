@@ -1,0 +1,228 @@
+"""Answer from retrieved excerpts and validated table references."""
+
+import re
+from collections.abc import Callable, Mapping, Sequence
+from typing import Protocol
+
+from finaudit_rag.arithmetic import CellReference, Operation, UnverifiedCalculation, calculate
+from finaudit_rag.contracts import (
+    AnswerPlan,
+    CalculationResult,
+    Citation,
+    CitedExcerpt,
+    CitedOperand,
+    QueryResponse,
+)
+from finaudit_rag.corpus import Document
+from finaudit_rag.ingestion import Chunk
+from finaudit_rag.privacy import mask_sensitive_text
+
+YEAR_REFERENCE = re.compile(r"\bFY\s*(?:20)?(\d{2})\b", re.IGNORECASE)
+PDF_PAGE = re.compile(r"\bPDF page (\d{1,4})\b", re.IGNORECASE)
+SCOPE = re.compile(r"\b(standalone|consolidated)\b", re.IGNORECASE)
+CHANGE = re.compile(r"\b(?:change|growth|increase|decrease|difference|year.over.year|yoy)\b")
+UNSUPPORTED_INSTRUCTION = re.compile(r"\b(?:calculate|compute|derive)\b")
+LIVE_RULE = re.compile(
+    r"\b(?:latest|current) (?:rule|circular|directions|requirements?)\b|\bas of (?:today|now)\b",
+    re.IGNORECASE,
+)
+
+
+class Planner(Protocol):
+    def plan(
+        self, question: str, operation: Operation | None, evidence: Sequence[dict[str, str]]
+    ) -> AnswerPlan: ...
+
+
+class AnswerCache(Protocol):
+    def get(self, question: str) -> QueryResponse | None: ...
+
+    def put(self, question: str, response: QueryResponse) -> None: ...
+
+
+def _operation(question: str) -> Operation | None:
+    normalized = question.casefold()
+    if "operating margin" in normalized:
+        return "operating_margin_change" if CHANGE.search(normalized) else "operating_margin"
+    if CHANGE.search(normalized) and (YEAR_REFERENCE.search(question) or "year" in normalized):
+        return "yoy_change"
+    return None
+
+
+def _source_text(chunk: Chunk) -> str:
+    if chunk.table is None:
+        source = mask_sensitive_text(chunk.text).text
+        return "\n".join(f"line {index}: {line}" for index, line in enumerate(source.splitlines()))
+    headers = " | ".join(f"{index}={label}" for index, label in enumerate(chunk.table.columns))
+    rows = [
+        f"row {index}: " + " | ".join(cell or "" for cell in row)
+        for index, row in enumerate(chunk.table.rows)
+    ]
+    return "\n".join([*chunk.table.context, f"columns: {headers}", *rows])
+
+
+class AnswerService:
+    """Validate model selections and generate response values locally."""
+
+    def __init__(
+        self,
+        documents: Mapping[str, Document],
+        retrieve: Callable[[str], Sequence[Chunk]],
+        planner: Planner,
+        cache: AnswerCache | None = None,
+    ) -> None:
+        self._documents = documents
+        self._retrieve = retrieve
+        self._planner = planner
+        self._cache = cache
+
+    def answer(self, question: str) -> QueryResponse:
+        """Return verifiable evidence or an explicit abstention."""
+        masked = mask_sensitive_text(question)
+        cache = self._cache if not masked.replacements else None
+        if cache is not None and (cached := cache.get(masked.text)) is not None:
+            return cached
+        response = self._answer(masked.text)
+        if cache is not None and response.status == "answered":
+            cache.put(masked.text, response)
+        return response
+
+    def _answer(self, question: str) -> QueryResponse:
+        def abstain(reason: str) -> QueryResponse:
+            return QueryResponse(status="abstained", redacted_question=question, reason=reason)
+
+        operation = _operation(question)
+        if LIVE_RULE.search(question):
+            return abstain("The corpus contains dated source snapshots.")
+        if operation is None and UNSUPPORTED_INSTRUCTION.search(question.casefold()):
+            return abstain("The requested calculation is outside the supported operations.")
+        issuers = {
+            document.issuer.casefold()
+            for document in self._documents.values()
+            if re.search(rf"\b{re.escape(document.issuer)}\b", question, re.IGNORECASE)
+        }
+        requested_years = {f"20{year}" for year in YEAR_REFERENCE.findall(question)}
+        pages = {int(page) for page in PDF_PAGE.findall(question)}
+        expected_kind = "table" if operation is not None else "text"
+        matching = {
+            chunk.id: chunk
+            for chunk in self._retrieve(question)
+            if chunk.document_id in self._documents
+            and 1 <= chunk.page <= self._documents[chunk.document_id].pages
+            and chunk.kind == expected_kind
+            and (not pages or chunk.page in pages)
+            and (not issuers or self._documents[chunk.document_id].issuer.casefold() in issuers)
+            and (
+                not requested_years
+                or any(re.search(rf"\b{year}\b", chunk.text) for year in requested_years)
+            )
+        }
+        chunks = dict(list(matching.items())[:5])
+        if not chunks:
+            return abstain("The corpus did not return usable evidence.")
+        context = [
+            {
+                "chunk_id": chunk.id,
+                "document": self._documents[chunk.document_id].title,
+                "kind": chunk.kind,
+                "text": mask_sensitive_text(_source_text(chunk)).text[:2400],
+            }
+            for chunk in chunks.values()
+        ]
+        plan = self._planner.plan(question, operation, context)
+        if plan.decision == "calculation" and operation is not None and not plan.excerpts:
+            try:
+                calculation = self._calculation(question, operation, plan, chunks)
+            except UnverifiedCalculation as error:
+                return abstain(str(error))
+            return QueryResponse(
+                status="answered", redacted_question=question, calculation=calculation
+            )
+        if plan.decision == "excerpt" and operation is None and not plan.operands:
+            excerpts = self._excerpts(plan, chunks)
+            excerpt_sources = [chunks[excerpt.citation.chunk_id].text for excerpt in excerpts]
+            if excerpts and all(
+                any(re.search(rf"\b{year}\b", source) for source in excerpt_sources)
+                for year in requested_years
+            ):
+                return QueryResponse(
+                    status="answered", redacted_question=question, excerpts=excerpts
+                )
+        return abstain("The retrieved evidence could not verify an answer.")
+
+    def _citation(self, chunk: Chunk) -> Citation:
+        document = self._documents[chunk.document_id]
+        return Citation(
+            document_id=document.id,
+            title=document.title,
+            page=chunk.page,
+            url=f"{document.url}#page={chunk.page}",
+            chunk_id=chunk.id,
+        )
+
+    def _excerpts(self, plan: AnswerPlan, chunks: Mapping[str, Chunk]) -> list[CitedExcerpt]:
+        excerpts: list[CitedExcerpt] = []
+        for selection in plan.excerpts:
+            chunk = chunks.get(selection.chunk_id)
+            if chunk is None or chunk.kind != "text":
+                return []
+            lines = mask_sensitive_text(chunk.text).text.splitlines()
+            start, end = selection.start_line, selection.end_line
+            if not (start <= end < min(len(lines), start + 8)):
+                return []
+            quote = " ".join(" ".join(lines[start : end + 1]).split())
+            if not 12 <= len(quote) <= 700:
+                return []
+            excerpts.append(CitedExcerpt(quote=quote, citation=self._citation(chunk)))
+        return excerpts
+
+    def _calculation(
+        self,
+        question: str,
+        operation: Operation,
+        plan: AnswerPlan,
+        chunks: Mapping[str, Chunk],
+    ) -> CalculationResult:
+        references = [CellReference(pick.chunk_id, pick.row, pick.column) for pick in plan.operands]
+        result = calculate(operation, references, chunks)
+        if operation == "yoy_change":
+            label = re.sub(r"\s+\d+(?:\.\d+)+$", "", result.operands[0].row_label.casefold())
+            query = question.casefold()
+            matches_revenue = label == "revenue from operations" and "revenue" in query
+            if label not in query and not matches_revenue:
+                raise UnverifiedCalculation("the source row does not match the requested metric")
+        requested_years = {f"FY20{year}" for year in YEAR_REFERENCE.findall(question)}
+        if requested_years and (
+            not requested_years.issubset({operand.period for operand in result.operands})
+            or result.operands[0].period != max(requested_years)
+        ):
+            raise UnverifiedCalculation(
+                "the cited operands do not match the requested financial years"
+            )
+        scopes = {scope.casefold() for scope in SCOPE.findall(question)}
+        if scopes:
+            for operand in result.operands:
+                table = chunks[operand.chunk_id].table
+                source_scopes = (
+                    {match.casefold() for match in SCOPE.findall(" ".join(table.context))}
+                    if table
+                    else set()
+                )
+                if len(scopes) != 1 or scopes != source_scopes:
+                    raise UnverifiedCalculation("the requested reporting scope is ambiguous")
+        return CalculationResult(
+            operation=result.operation,
+            result=result.result,
+            unit=result.unit,
+            formula=result.formula,
+            operands=[
+                CitedOperand(
+                    metric=operand.row_label,
+                    period=operand.period,
+                    amount=operand.amount,
+                    unit=operand.unit,
+                    citation=self._citation(chunks[operand.chunk_id]),
+                )
+                for operand in result.operands
+            ],
+        )

@@ -35,7 +35,7 @@ python -m finaudit_rag.ingestion data/corpus.json --pdf-dir data/local/corpus --
 python -m finaudit_rag.ingestion data/corpus.json --pdf-dir data/local/corpus --output data/local/chunks-baseline.jsonl --mode baseline
 ```
 
-Both exports preserve one-based PDF page references. The table-aware export also keeps numeric columns in order and carries the source headings with each group of rows. PDFs remain in the ignored local directory.
+Both exports preserve one-based PDF page references. The table-aware export keeps numeric columns in order and carries the applicable source headings with each group of rows. The parser skips lines with undecodable glyphs and ruled tables that contain those glyphs. PDFs remain in the ignored local directory.
 
 ### Search the corpus
 

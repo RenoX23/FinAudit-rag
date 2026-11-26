@@ -20,6 +20,7 @@ Cell = str | None
 Grid = tuple[tuple[Cell, ...], ...]
 NUMBER = re.compile(r"(?:[-–—]|[+-]?(?:\(\d[\d,]*(?:\.\d+)?\)|\d[\d,]*(?:\.\d+)?)(?:%|\*)?)")
 YEAR = re.compile(r"(?:19|20|21)\d{2}")
+UNDECODED = re.compile(r"\(cid:\d+\)")
 ROW_ALIGNMENT = 4.0
 MAX_TABLE_ROWS = 8
 
@@ -133,11 +134,23 @@ def _column_labels(context: list[list[Word]], width: int) -> tuple[str, ...]:
     return ("Line item", *(f"Column {index}" for index in range(1, width + 1)))
 
 
-def _build_numeric_table(
+def _line_text(line: list[Word]) -> str:
+    return " ".join(word.text for word in line)
+
+
+def _section_heading(line: list[Word]) -> str:
+    text = _line_text(line)
+    if not any(char.isdigit() for char in text) and len(text) <= 120:
+        if text.isupper() or text.endswith(":") or text.casefold().endswith(" expenses"):
+            return text
+    return ""
+
+
+def _build_numeric_tables(
     lines: list[list[Word]], group: list[tuple[int, tuple[Word, ...]]], previous_end: int
-) -> Table | None:
+) -> list[Table]:
     if len(group) < 3:
-        return None
+        return []
     counts = Counter(len(cells) for _, cells in group)
     width = min(counts, key=lambda count: (-counts[count], count))
     anchors = next(cells for _, cells in group if len(cells) == width)
@@ -145,8 +158,8 @@ def _build_numeric_table(
     columns = _column_labels(context, width)
     rows = [
         (
-            " ".join(word.text for word in lines[index][:-width]),
-            *(word.text for word in cells[-width:]),
+            index,
+            (_line_text(lines[index][:-width]), *(word.text for word in cells[-width:])),
         )
         for index, cells in group
         if len(cells) >= width
@@ -156,17 +169,32 @@ def _build_numeric_table(
         )
     ]
     if len(rows) < 3:
-        return None
-    return Table(
-        context=tuple(" ".join(word.text for word in line) for line in context),
-        columns=columns,
-        rows=tuple(rows),
-    )
+        return []
+
+    heading = _section_heading(context[-1]) if context else ""
+    common = context[:-1] if heading else context
+    headings = tuple(_line_text(line) for line in common)
+    tables: list[Table] = []
+    section_rows: list[tuple[str, ...]] = []
+    previous_index = group[0][0] - 1
+    for index, row in rows:
+        for line in lines[previous_index + 1 : index]:
+            if next_heading := _section_heading(line):
+                if section_rows:
+                    section = (*headings, heading) if heading else headings
+                    tables.append(Table(section, columns, tuple(section_rows)))
+                    section_rows = []
+                heading = next_heading
+        section_rows.append(row)
+        previous_index = index
+    section = (*headings, heading) if heading else headings
+    tables.append(Table(section, columns, tuple(section_rows)))
+    return tables
 
 
 def aligned_numeric_tables(words: Iterable[Word]) -> Iterator[Table]:
     """Read repeated right-aligned numeric cells in unruled financial tables."""
-    lines = _lines(words)
+    lines = [line for line in _lines(words) if not UNDECODED.search(_line_text(line))]
     group: list[tuple[int, tuple[Word, ...]]] = []
     previous_end = -1
     for index, line in enumerate(lines):
@@ -174,20 +202,22 @@ def aligned_numeric_tables(words: Iterable[Word]) -> Iterator[Table]:
         if not 2 <= len(cells) <= 10:
             continue
         if group and (index - group[-1][0] > 3 or not _rows_align(group[-1][1], cells)):
-            if table := _build_numeric_table(lines, group, previous_end):
-                yield table
+            if tables := _build_numeric_tables(lines, group, previous_end):
+                yield from tables
                 previous_end = group[-1][0]
             group = []
         group.append((index, cells))
-    if table := _build_numeric_table(lines, group, previous_end):
-        yield table
+    yield from _build_numeric_tables(lines, group, previous_end)
 
 
 def _ruled_tables(page: Page) -> Iterator[Table]:
     for candidate in page.find_tables():
+        raw_grid = candidate.extract()
+        if any(UNDECODED.search(cell) for row in raw_grid for cell in row if cell):
+            continue
         grid = [
             tuple(" ".join(cell.split()) if cell else None for cell in row)
-            for row in candidate.extract()
+            for row in raw_grid
             if any(cell and cell.strip() for cell in row)
         ]
         if len(grid) < 2 or len(grid[0]) < 2 or sum(cell is not None for cell in grid[0]) < 2:
@@ -205,13 +235,16 @@ def _table_text(table: Table) -> str:
 def _page_chunks(document: Document, page: Page, page_number: int, mode: Mode) -> Iterator[Chunk]:
     prefix = f"{document.id}:{page_number}"
     text: str = page.extract_text() or ""
+    text = "\n".join(line for line in text.splitlines() if not UNDECODED.search(line))
     for ordinal, block in enumerate(_text_windows(text, mode)):
         yield Chunk(f"{prefix}:text:{ordinal}", document.id, page_number, "text", block)
 
     if mode == "baseline":
         return
-    words = (Word(raw["text"], raw["x1"], raw["top"]) for raw in page.extract_words())
-    aligned = list(aligned_numeric_tables(words)) if document.kind == "filing" else []
+    aligned = []
+    if document.kind == "filing":
+        words = (Word(raw["text"], raw["x1"], raw["top"]) for raw in page.extract_words())
+        aligned = list(aligned_numeric_tables(words))
     tables = aligned or list(_ruled_tables(page))
     ordinal = 0
     for table in tables:

@@ -28,6 +28,15 @@ The corpus manifest records the original publisher URL, PDF page count, and SHA-
 python -m finaudit_rag.corpus data/corpus.json --pdf-dir data/local/corpus
 ```
 
+To inspect extracted text and tables, export the verified snapshots as JSON Lines:
+
+```sh
+python -m finaudit_rag.ingestion data/corpus.json --pdf-dir data/local/corpus --output data/local/chunks-table-aware.jsonl
+python -m finaudit_rag.ingestion data/corpus.json --pdf-dir data/local/corpus --output data/local/chunks-baseline.jsonl --mode baseline
+```
+
+Both exports preserve one-based PDF page references. The table-aware export also keeps numeric columns in order and carries the source headings with each group of rows. PDFs remain in the ignored local directory.
+
 The benchmark will run fixed-size chunking and vector-only retrieval against the upgraded pipeline on the same held-out questions. The [evaluation protocol](evals/README.md) defines the labels, measurements, and release criteria.
 
 ## Build and release plan

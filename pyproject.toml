@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Source-cited question answering for financial and regulatory PDFs"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["pdfplumber==0.11.9"]
 
 [project.optional-dependencies]
 dev = [
@@ -31,6 +31,10 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
+
+[[tool.mypy.overrides]]
+module = ["pdfplumber", "pdfplumber.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

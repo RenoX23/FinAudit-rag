@@ -1,0 +1,22 @@
+/project.md
+
+# Local credentials and configuration
+.env
+.env.*
+!.env.example
+
+# Python environments, test output, and builds
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Downloaded corpus and other generated local data
+/data/local/

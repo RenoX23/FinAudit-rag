@@ -1,0 +1,19 @@
+services:
+  db:
+    image: pgvector/pgvector:0.8.7-pg16-bookworm
+    environment:
+      POSTGRES_DB: finaudit
+      POSTGRES_USER: finaudit
+      POSTGRES_PASSWORD: ${FINAUDIT_POSTGRES_PASSWORD:?set a local PostgreSQL password in .env}
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "finaudit", "-d", "finaudit"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

@@ -2,7 +2,7 @@
 
 The first release is a public read-only demo. Use a single Dockerized FastAPI service with CPU-only execution and PostgreSQL with pgvector. Host the immutable source corpus outside the web service's writable filesystem. Keep database and provider credentials in the hosting platform's secret configuration.
 
-Render is the candidate for the application. Its free service publishes an HTTPS URL, uses ephemeral storage, and can spin down during idle periods. The 512 MB RAM limit makes a lightweight serving process and external model calls the initial design. Measure memory and cold-start latency before the release decision. [Render web services](https://render.com/docs/web-services) · [Free instance limits](https://render.com/docs/free) · [Compute pricing](https://render.com/pricing)
+Render is the candidate for the application. Its free service publishes an HTTPS URL, uses ephemeral storage, and can spin down during idle periods. Measure peak memory with both CPU retrieval models loaded against the 512 MB limit, and measure cold-start latency before the release decision. [Render web services](https://render.com/docs/web-services) · [Free instance limits](https://render.com/docs/free) · [Compute pricing](https://render.com/pricing)
 
 Neon is the managed database candidate because it supports pgvector. Use TLS and a pooled connection. Keep full PDF files out of PostgreSQL. The local integration target is PostgreSQL with pgvector in Docker Compose. [Neon pgvector](https://neon.com/docs/extensions/pgvector)
 

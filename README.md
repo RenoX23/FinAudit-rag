@@ -4,7 +4,7 @@ FinAudit-RAG is a source-cited question answering project for financial filings 
 
 The first release will cover a fixed collection of public, digital-text Indian company filings and RBI or SEBI documents. A policy lookup should cite the PDF page. A calculation should show its cited inputs, period, units, and Python-computed result. A question without sufficient evidence should yield an explicit abstention.
 
-**Status** — Repository foundation. The query API, evaluation results, and public demo are pending.
+**Status** — PDF ingestion and retrieval. The answering API, evaluation results, and public demo are pending.
 
 ## Development setup
 
@@ -27,6 +27,27 @@ The corpus manifest records the original publisher URL, PDF page count, and SHA-
 ```sh
 python -m finaudit_rag.corpus data/corpus.json --pdf-dir data/local/corpus
 ```
+
+To inspect extracted text and tables, export the verified snapshots as JSON Lines:
+
+```sh
+python -m finaudit_rag.ingestion data/corpus.json --pdf-dir data/local/corpus --output data/local/chunks-table-aware.jsonl
+python -m finaudit_rag.ingestion data/corpus.json --pdf-dir data/local/corpus --output data/local/chunks-baseline.jsonl --mode baseline
+```
+
+Both exports preserve one-based PDF page references. The table-aware export keeps numeric columns in order and carries the applicable source headings with each group of rows. The parser skips lines with undecodable glyphs and ruled tables that contain those glyphs. PDFs remain in the ignored local directory.
+
+### Search the corpus
+
+Copy `.env.example` to `.env`, choose a local database password, and start pgvector with `docker compose up -d db`. Set `FINAUDIT_DATABASE_URL` to the connection URL for user `finaudit`, database `finaudit`, and `127.0.0.1:5433`. URL-encode special characters in the password.
+
+```sh
+python -m finaudit_rag.retrieval index data/local/chunks-table-aware.jsonl --mode table-aware
+python -m finaudit_rag.retrieval index data/local/chunks-baseline.jsonl --mode baseline
+python -m finaudit_rag.retrieval search COLLECTION_ID "Find SEBI/HO/MIRSD/MIRSD-PoD/P/CIR/2025/80"
+```
+
+Use the ID printed by the corresponding index command in place of `COLLECTION_ID`. The baseline returns cosine matches. Table-aware retrieval combines BM25 and cosine ranks, then applies a CPU reranker. Model snapshots download on first use to the ignored model cache. Queries and evidence are processed locally by both retrieval models. The search command prints evidence and PDF page numbers.
 
 The benchmark will run fixed-size chunking and vector-only retrieval against the upgraded pipeline on the same held-out questions. The [evaluation protocol](evals/README.md) defines the labels, measurements, and release criteria.
 

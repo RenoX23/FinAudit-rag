@@ -8,7 +8,13 @@ version = "0.1.0"
 description = "Source-cited question answering for financial and regulatory PDFs"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["pdfplumber==0.11.9"]
+dependencies = [
+    "fastembed==0.7.3",
+    "huggingface-hub==0.36.2",
+    "pdfplumber==0.11.9",
+    "psycopg[binary]==3.2.9",
+    "rank-bm25==0.2.2",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -33,7 +39,7 @@ python_version = "3.11"
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["pdfplumber", "pdfplumber.*"]
+module = ["pdfplumber", "pdfplumber.*", "rank_bm25"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

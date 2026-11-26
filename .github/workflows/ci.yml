@@ -44,8 +44,16 @@ jobs:
         run: python -m mypy src tests
       - name: Test
         run: python -m pytest
-      - name: Validate local Compose configuration
-        run: FINAUDIT_POSTGRES_PASSWORD=ci-only docker compose config --quiet
+      - name: Verify local Compose database
+        run: |
+          export FINAUDIT_POSTGRES_PASSWORD="$(openssl rand -hex 24)"
+          docker compose config --quiet
+          trap 'docker compose down' EXIT
+          docker compose up -d --wait db
+          docker compose exec -T db sh -c '
+            PGPASSWORD="$(cat "$POSTGRES_PASSWORD_FILE")" \
+              psql -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT 1"
+          '
       - name: Validate corpus manifest
         run: python -m finaudit_rag.corpus data/corpus.json
       - name: Build package

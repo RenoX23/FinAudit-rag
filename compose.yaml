@@ -4,11 +4,13 @@ services:
     environment:
       POSTGRES_DB: finaudit
       POSTGRES_USER: finaudit
-      POSTGRES_PASSWORD: ${FINAUDIT_POSTGRES_PASSWORD:?set a local PostgreSQL password in .env}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
     ports:
       - "127.0.0.1:5433:5432"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "finaudit", "-d", "finaudit"]
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "finaudit", "-d", "finaudit"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -17,3 +19,7 @@ services:
 
 volumes:
   pgdata:
+
+secrets:
+  db_password:
+    environment: FINAUDIT_POSTGRES_PASSWORD

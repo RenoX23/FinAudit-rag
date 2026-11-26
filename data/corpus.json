@@ -1,0 +1,95 @@
+{
+  "version": "v1",
+  "documents": [
+    {
+      "id": "infosys-fy25-annual",
+      "title": "Infosys Integrated Annual Report FY2024-25",
+      "issuer": "Infosys",
+      "kind": "filing",
+      "url": "https://archives.nseindia.com/corporate/Infosys_02062025154237_infosys-ar-2025.pdf",
+      "sha256": "6224d11244d3f44f7e95901428a8ff23164f383cd1960e02a47483c48612a3c5",
+      "pages": 370
+    },
+    {
+      "id": "rbi-kyc-faq-2025-06",
+      "title": "RBI KYC FAQ dated June 9, 2025 (historical snapshot)",
+      "issuer": "RBI",
+      "kind": "regulatory",
+      "url": "https://www.rbi.org.in/commonman/Upload/English/FAQs/PDFs/KYC09062025.pdf",
+      "sha256": "a0532fbb8b096053ba1cec6b5ac83393f59fa3f034e6c5f68f623b51e4baa001",
+      "pages": 10
+    },
+    {
+      "id": "sebi-investor-charter-2025-06",
+      "title": "SEBI Investor Charter for Investment Advisers, 2025/80",
+      "issuer": "SEBI",
+      "kind": "regulatory",
+      "url": "https://www.sebi.gov.in/sebi_data/attachdocs/jun-2025/1748863758785.pdf",
+      "sha256": "523185baf645484d06857df3eb8296915f532abe1da4ffe6159d825924078680",
+      "pages": 9
+    },
+    {
+      "id": "sebi-research-analyst-charter-2025-06",
+      "title": "SEBI Investor Charter for Research Analysts, June 2025",
+      "issuer": "SEBI",
+      "kind": "regulatory",
+      "url": "https://www.sebi.gov.in/sebi_data/attachdocs/jun-2025/1748864324710.pdf",
+      "sha256": "83487e433d2df33862ede77e715673a0f382c60c99e4061e0b41740d3ded12e9",
+      "pages": 9
+    },
+    {
+      "id": "sebi-scores-2023-09",
+      "title": "SEBI SCORES and Online Dispute Resolution circular, September 2023",
+      "issuer": "SEBI",
+      "kind": "regulatory",
+      "url": "https://www.sebi.gov.in/sebi_data/attachdocs/sep-2023/1695456916964.pdf",
+      "sha256": "26c230d804f1bbfd190e8187698276544a4a025b4a9f74a23e72b11a0abff40b",
+      "pages": 15
+    },
+    {
+      "id": "sebi-scores-extension-2023-12",
+      "title": "SEBI SCORES implementation timeline extension, 2023/183",
+      "issuer": "SEBI",
+      "kind": "regulatory",
+      "url": "https://www.sebi.gov.in/sebi_data/attachdocs/dec-2023/1701420681196.pdf",
+      "sha256": "90139d2e214cd27eae9ed5942c628803fde27de50b64f10db31d8aed4d6d6dba",
+      "pages": 1
+    },
+    {
+      "id": "sebi-stock-broker-charter-2025-02",
+      "title": "SEBI Investor Charter for Stock Brokers, February 2025",
+      "issuer": "SEBI",
+      "kind": "regulatory",
+      "url": "https://www.sebi.gov.in/sebi_data/attachdocs/feb-2025/1740135808079.pdf",
+      "sha256": "fe87eeb3aebbe0d3811f41146f0bb99510e96e76553da94227d14aef0c7f61f8",
+      "pages": 11
+    },
+    {
+      "id": "tcs-fy24-q4",
+      "title": "TCS Q4 FY2023-24 audited financial results",
+      "issuer": "TCS",
+      "kind": "filing",
+      "url": "https://archives.nseindia.com/corporate/TCS_12042024154155_SELetterFinancialResults.pdf",
+      "sha256": "e1b9367f93ba7a31c01945fab2f57a2037954c5be4bfdca436b151306887e988",
+      "pages": 20
+    },
+    {
+      "id": "tcs-fy25-q2",
+      "title": "TCS Q2 FY2024-25 financial results",
+      "issuer": "TCS",
+      "kind": "filing",
+      "url": "https://archives.nseindia.com/corporate/TCS_10102024160825_SEIntfinancials.pdf",
+      "sha256": "fd59a27f69aa63e888325d45f1e68f6a0cd7a8820301edc3ba89d8128a58b018",
+      "pages": 20
+    },
+    {
+      "id": "tcs-fy25-q4",
+      "title": "TCS Q4 FY2024-25 audited financial results",
+      "issuer": "TCS",
+      "kind": "filing",
+      "url": "https://archives.nseindia.com/corporate/TCS_CORPCS_10042025160739_BM_Outcome_financials_signed.pdf",
+      "sha256": "10ae2cfd51f966036774091acf830e31ed6f1d330dd63b4a13763607787d6fb7",
+      "pages": 21
+    }
+  ]
+}

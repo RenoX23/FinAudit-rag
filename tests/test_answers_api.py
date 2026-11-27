@@ -3,6 +3,7 @@ from collections.abc import Callable
 from secrets import token_urlsafe
 
 import httpx
+import pytest
 from fastapi.testclient import TestClient
 
 from finaudit_rag.answer_service import AnswerService
@@ -15,13 +16,19 @@ from finaudit_rag.planner import ChatPlanner
 URL = "https://example.org/annual.pdf"
 DOCUMENT = Document("example", "Example annual filing", "Example", "filing", URL, "0" * 64, 300)
 QUOTE = "Investment advisers must publish a monthly report."
-POLICY = Chunk("example:10:text:0", "example", 10, "text", f"{QUOTE}\nContact contact@example.org.")
+POLICY = Chunk(
+    "example:10:text:0",
+    "example",
+    10,
+    "text",
+    f"{QUOTE}\nContact contact@example.org.\nAccount number | 0123-456789\nAadhaar 2345\n6789 0123",
+)
 TABLE = Chunk(
     "example:264:table:0",
     "example",
     264,
     "table",
-    "Standalone results for 2025 and 2024",
+    "Standalone results for FY2025 and FY2024",
     Table(
         ("Standalone financial statements", "In ₹ crore", "Year ended March 31"),
         ("Line item", "2025", "2024"),
@@ -55,7 +62,11 @@ def test_policy_answer_cites_exact_page_and_masks_outbound_text() -> None:
         serialized = body["messages"][1]["content"]
         assert "ABCPD1234E" not in serialized
         assert "contact@example.org" not in serialized
+        assert "0123-456789" not in serialized
+        assert "3456" not in serialized and "7890" not in serialized
+        assert "6789 0123" not in serialized
         assert "[PAN]" in serialized and "[EMAIL]" in serialized
+        assert "[ACCOUNT]" in serialized and "[AADHAAR]" in serialized
         responses.append(serialized)
         return completion(
             {
@@ -67,7 +78,8 @@ def test_policy_answer_cites_exact_page_and_masks_outbound_text() -> None:
     with TestClient(create_app(service(POLICY, handler))) as client:
         assert client.get("/healthz").json() == {"status": "ok"}
         reply = client.post(
-            "/query", json={"question": "What must advisers publish? PAN ABCPD1234E"}
+            "/query",
+            json={"question": "What must advisers publish? Account no. 3456 7890. PAN ABCPD1234E"},
         )
     assert reply.status_code == 200
     assert len(responses) == 1
@@ -100,12 +112,21 @@ def test_routes_numeric_question_and_returns_python_result_with_input_citations(
     assert [item["citation"]["page"] for item in body["calculation"]["operands"]] == [264] * 4
 
 
-def test_abstains_on_missing_year_without_calling_model() -> None:
+@pytest.mark.parametrize(
+    "question",
+    [
+        "What was the operating margin in FY2029?",
+        "What was the operating margin in 2029?",
+        "What was the Q4 FY2025 operating margin?",
+        "What was the March 2025 operating margin?",
+    ],
+)
+def test_abstains_on_missing_or_subannual_period_without_calling_model(question: str) -> None:
     def unexpected(_request: httpx.Request) -> httpx.Response:
         raise AssertionError("a missing year should abstain before an outbound request")
 
     with TestClient(create_app(service(TABLE, unexpected))) as client:
-        reply = client.post("/query", json={"question": "What was the operating margin in FY2029?"})
+        reply = client.post("/query", json={"question": question})
     assert reply.status_code == 200
     assert reply.json()["status"] == "abstained"
 

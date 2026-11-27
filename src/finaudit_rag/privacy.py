@@ -5,8 +5,11 @@ from dataclasses import dataclass
 
 EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w.-]+\.[a-z]{2,}(?![\w-]|\.[\w-])", re.IGNORECASE)
 PAN = re.compile(r"\b[A-Z]{5}\d{4}[A-Z]\b", re.IGNORECASE)
-AADHAAR = re.compile(r"(?<![\w\d])[2-9]\d{3}[- ]?\d{4}[- ]?\d{4}(?![\w\d])")
-ACCOUNT = re.compile(r"(?i)(\b(?:bank )?account (?:number|no\.?|#)\s*[:#|–-]?\s*)(\d{6,18})(?!\w)")
+AADHAAR = re.compile(r"(?<!\w)[2-9]\d{3}[\s–-]*\d{4}[\s–-]*\d{4}(?!\w)")
+ACCOUNT = re.compile(
+    r"(?i)(\b(?:bank\s+)?(?:account|acct|a/c)\s+(?:number|no\.?|#)\s*[:#|–-]?\s*)"
+    r"(\d(?:[\s–-]*\d)*)(?!\w)"
+)
 
 
 @dataclass(frozen=True)

@@ -18,3 +18,10 @@ def test_masks_sentence_final_addresses_and_table_account_numbers() -> None:
     masked = mask_sensitive_text("Contact analyst@example.org.\nAccount number | 1234567890")
     assert masked.text == "Contact [EMAIL].\nAccount number | [ACCOUNT]"
     assert masked.replacements == 2
+
+
+def test_masks_complete_grouped_and_wrapped_identifiers() -> None:
+    original = "Account number: 0123-456789\nA/c no. 012345 6789.\nAadhaar 2345\n6789 0123."
+    masked = mask_sensitive_text(original)
+    assert masked.text == "Account number: [ACCOUNT]\nA/c no. [ACCOUNT].\nAadhaar [AADHAAR]."
+    assert masked.replacements == 3

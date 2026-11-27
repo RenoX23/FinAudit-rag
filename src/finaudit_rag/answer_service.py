@@ -18,12 +18,24 @@ from finaudit_rag.ingestion import Chunk
 from finaudit_rag.privacy import mask_sensitive_text
 
 YEAR_REFERENCE = re.compile(r"\bFY\s*(?:20)?(\d{2})\b", re.IGNORECASE)
+BARE_YEAR = re.compile(r"\b(?:19|20|21)\d{2}\b")
 PDF_PAGE = re.compile(r"\bPDF page (\d{1,4})\b", re.IGNORECASE)
 SCOPE = re.compile(r"\b(standalone|consolidated)\b", re.IGNORECASE)
 CHANGE = re.compile(r"\b(?:change|growth|increase|decrease|difference|year.over.year|yoy)\b")
 UNSUPPORTED_INSTRUCTION = re.compile(r"\b(?:calculate|compute|derive)\b")
 LIVE_RULE = re.compile(
     r"\b(?:latest|current) (?:rule|circular|directions|requirements?)\b|\bas of (?:today|now)\b",
+    re.IGNORECASE,
+)
+SUBANNUAL = re.compile(
+    r"\b[QH][1-4](?=\b|FY)|\b(?:quarter(?:ly)?|half[- ]year|three months|"
+    r"six months|[36] months|monthly)\b",
+    re.IGNORECASE,
+)
+MONTH = re.compile(
+    r"\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|"
+    r"Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+"
+    r"(?:\d{1,2},?\s+)?(?:19|20|21)\d{2}\b",
     re.IGNORECASE,
 )
 
@@ -44,9 +56,18 @@ def _operation(question: str) -> Operation | None:
     normalized = question.casefold()
     if "operating margin" in normalized:
         return "operating_margin_change" if CHANGE.search(normalized) else "operating_margin"
-    if CHANGE.search(normalized) and (YEAR_REFERENCE.search(question) or "year" in normalized):
+    if CHANGE.search(normalized) and (
+        YEAR_REFERENCE.search(question) or "year" in normalized or "yoy" in normalized
+    ):
         return "yoy_change"
     return None
+
+
+def _years(question: str, include_bare: bool) -> set[str]:
+    years = {f"20{year}" for year in YEAR_REFERENCE.findall(question)}
+    if include_bare:
+        years.update(BARE_YEAR.findall(question))
+    return years
 
 
 def _source_text(chunk: Chunk) -> str:
@@ -94,6 +115,11 @@ class AnswerService:
         operation = _operation(question)
         if LIVE_RULE.search(question):
             return abstain("The corpus contains dated source snapshots.")
+        if operation is not None and (
+            SUBANNUAL.search(question)
+            or (MONTH.search(question) and "year ended" not in question.casefold())
+        ):
+            return abstain("Calculations require annual reporting periods.")
         if operation is None and UNSUPPORTED_INSTRUCTION.search(question.casefold()):
             return abstain("The requested calculation is outside the supported operations.")
         issuers = {
@@ -101,7 +127,7 @@ class AnswerService:
             for document in self._documents.values()
             if re.search(rf"\b{re.escape(document.issuer)}\b", question, re.IGNORECASE)
         }
-        requested_years = {f"20{year}" for year in YEAR_REFERENCE.findall(question)}
+        requested_years = _years(question, include_bare=operation is not None)
         pages = {int(page) for page in PDF_PAGE.findall(question)}
         expected_kind = "table" if operation is not None else "text"
         matching = {
@@ -114,7 +140,7 @@ class AnswerService:
             and (not issuers or self._documents[chunk.document_id].issuer.casefold() in issuers)
             and (
                 not requested_years
-                or any(re.search(rf"\b{year}\b", chunk.text) for year in requested_years)
+                or requested_years.intersection(_years(chunk.text, include_bare=True))
             )
         }
         chunks = dict(list(matching.items())[:5])
@@ -140,11 +166,12 @@ class AnswerService:
             )
         if plan.decision == "excerpt" and operation is None and not plan.operands:
             excerpts = self._excerpts(plan, chunks)
-            excerpt_sources = [chunks[excerpt.citation.chunk_id].text for excerpt in excerpts]
-            if excerpts and all(
-                any(re.search(rf"\b{year}\b", source) for source in excerpt_sources)
-                for year in requested_years
-            ):
+            excerpt_years = {
+                year
+                for excerpt in excerpts
+                for year in _years(chunks[excerpt.citation.chunk_id].text, include_bare=True)
+            }
+            if excerpts and requested_years.issubset(excerpt_years):
                 return QueryResponse(
                     status="answered", redacted_question=question, excerpts=excerpts
                 )
@@ -191,7 +218,7 @@ class AnswerService:
             matches_revenue = label == "revenue from operations" and "revenue" in query
             if label not in query and not matches_revenue:
                 raise UnverifiedCalculation("the source row does not match the requested metric")
-        requested_years = {f"FY20{year}" for year in YEAR_REFERENCE.findall(question)}
+        requested_years = {f"FY{year}" for year in _years(question, include_bare=True)}
         if requested_years and (
             not requested_years.issubset({operand.period for operand in result.operands})
             or result.operands[0].period != max(requested_years)

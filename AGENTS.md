@@ -4,6 +4,7 @@
 
 - Setup with Python 3.11 or later and `python -m pip install ".[dev]"` inside a virtual environment.
 - Run the foundation tool with `python -m finaudit_rag.corpus data/corpus.json`.
+- Run the API with `python -m uvicorn finaudit_rag.api:create_app --factory` after configuring the database, collection, and model provider in `.env`.
 - Test with `python -m pytest`.
 - Lint with `python -m ruff check .` and `python -m ruff format --check .`.
 - Type-check with `python -m mypy src tests`.

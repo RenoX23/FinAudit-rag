@@ -165,6 +165,9 @@ class AnswerService:
             for document in self._documents.values()
             if re.search(rf"\b{re.escape(document.issuer)}\b", question, re.IGNORECASE)
         }
+        scopes = {scope.casefold() for scope in SCOPE.findall(question)}
+        if operation is not None and (len(issuers) != 1 or len(scopes) != 1):
+            return abstain("Calculations require one named issuer and one reporting scope.")
         requested_years = _years(question, include_bare=operation is not None)
         pages = {int(page) for page in PDF_PAGE.findall(question)}
         expected_kind = "table" if operation is not None else "text"

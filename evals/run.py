@@ -214,7 +214,9 @@ def main() -> None:
                         capture.chunks = {chunk.id: chunk for chunk in hits}
                         return hits
 
-                    response = AnswerService(docs, retrieve, recording).answer(query)
+                    response = AnswerService(
+                        docs, retrieve, recording, lookup=searcher.lookup
+                    ).answer(query)
                     citation = [
                         PageKey(document_id=item.citation.document_id, page=item.citation.page)
                         for item in (
@@ -223,14 +225,24 @@ def main() -> None:
                             else response.excerpts
                         )
                     ]
+                    text = " ".join(item.quote for item in response.excerpts)
+                    context = recording.pages
+                    if lookup := response.lookup:
+                        citation = [
+                            PageKey(
+                                document_id=lookup.citation.document_id, page=lookup.citation.page
+                            )
+                        ]
+                        text = f"{lookup.metric} {lookup.amount:f} {lookup.unit}"
+                        context = citation
                     observation = Observation(
                         id=case.id,
                         status=response.status,
-                        text=" ".join(item.quote for item in response.excerpts),
+                        text=text,
                         result=response.calculation.result if response.calculation else None,
                         unit=response.calculation.unit if response.calculation else None,
                         citations=citation,
-                        context=recording.pages,
+                        context=context,
                         seconds=0.0,
                     )
             except (httpx.HTTPError, PlannerUnavailable, ValueError, KeyError, TypeError) as error:

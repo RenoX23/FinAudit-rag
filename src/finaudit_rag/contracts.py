@@ -6,6 +6,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from finaudit_rag.arithmetic import Operation
+from finaudit_rag.lookup import ReportingScope
 
 Question = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)]
 
@@ -57,6 +58,10 @@ class CitedOperand(BaseModel):
     citation: Citation
 
 
+class CitedLookup(CitedOperand):
+    scope: ReportingScope
+
+
 class CalculationResult(BaseModel):
     operation: Operation
     result: Decimal
@@ -71,3 +76,4 @@ class QueryResponse(BaseModel):
     reason: str | None = None
     excerpts: list[CitedExcerpt] = Field(default_factory=list)
     calculation: CalculationResult | None = None
+    lookup: CitedLookup | None = None

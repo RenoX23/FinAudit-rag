@@ -9,23 +9,42 @@ import re
 from collections import defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict
+from decimal import Decimal
 from pathlib import Path
-from typing import Protocol
+from typing import NamedTuple, Protocol
 
 from rank_bm25 import BM25Okapi
 
 from finaudit_rag.answer_service import PDF_PAGE, SCOPE, _operation, _years
-from finaudit_rag.arithmetic import FY, INR_CRORE, QUARTER_ENDED, YEAR_ENDED
+from finaudit_rag.arithmetic import (
+    FY,
+    INR_CRORE,
+    QUARTER_ENDED,
+    YEAR_ENDED,
+    CellReference,
+    Operand,
+    UnverifiedCalculation,
+    _metric,
+    _read_operand,
+)
 from finaudit_rag.corpus import Document, load_manifest
 from finaudit_rag.financial_headers import verified_financial_header
 from finaudit_rag.ingestion import Chunk, chunk_from_record
+from finaudit_rag.lookup import FILING_YEAR, INCOME_STATEMENT, LookupRequest
 from finaudit_rag.models import EMBEDDING_REVISION, CpuModels
 from finaudit_rag.vector_store import PgChunkStore
 
 WORDS = re.compile(r"\w+(?:[./-]\w+)*")
 CIRCULAR_ID = re.compile(r"(?<!\w)[a-z]{2,}(?:/[a-z\d.-]+)+/\d+(?!\w)", re.IGNORECASE)
 MAX_CANDIDATES = 20
-RETRIEVAL_VERSION = "hybrid-annual-tables-v1"
+RETRIEVAL_VERSION = "hybrid-annual-tables-v2"
+
+
+class _AnnualTable(NamedTuple):
+    chunk: Chunk
+    years: set[str]
+    scopes: set[str]
+    heading: str
 
 
 class ChunkStore(Protocol):
@@ -63,7 +82,7 @@ class HybridRetriever:
         self._chunks = store.list_chunks(collection_id)
         if not self._chunks:
             raise ValueError(f"unknown or empty chunk collection {collection_id}")
-        self._annual_tables: dict[str, tuple[set[str], set[str], str]] = {}
+        self._annual_tables: dict[str, _AnnualTable] = {}
         for chunk in self._chunks:
             document = documents.get(chunk.document_id)
             if document is None or chunk.kind != "table" or not 1 <= chunk.page <= document.pages:
@@ -80,7 +99,9 @@ class HybridRetriever:
                 continue
             if not INR_CRORE.search(heading):
                 continue
-            self._annual_tables[chunk.id] = (years, set(SCOPE.findall(heading.casefold())), heading)
+            self._annual_tables[chunk.id] = _AnnualTable(
+                verified, years, set(SCOPE.findall(heading.casefold())), heading
+            )
         self._lexical = BM25Okapi([tokens(search_text(chunk)) for chunk in self._chunks])
 
     def _calculation_candidates(self, query: str) -> set[str]:
@@ -98,9 +119,39 @@ class HybridRetriever:
             if (metadata := self._annual_tables.get(chunk.id)) is not None
             and (not pages or chunk.page in pages)
             and (not issuers or self._documents[chunk.document_id].issuer.casefold() in issuers)
-            and years.issubset(metadata[0])
-            and (not scopes or (len(scopes) == 1 and scopes == metadata[1]))
+            and years.issubset(metadata.years)
+            and (not scopes or (len(scopes) == 1 and scopes == metadata.scopes))
         }
+
+    def lookup(self, request: LookupRequest) -> tuple[Chunk, Operand] | None:
+        """Select a unique amount from the requested annual statement."""
+        matches: dict[Decimal, tuple[Chunk, Operand]] = {}
+        for metadata in self._annual_tables.values():
+            chunk = metadata.chunk
+            document = self._documents[chunk.document_id]
+            if (
+                request.issuer != document.issuer.casefold()
+                or request.year not in metadata.years
+                or metadata.scopes != {request.scope}
+                or not INCOME_STATEMENT.search(metadata.heading)
+                or (request.page is not None and chunk.page != request.page)
+                or (
+                    request.filing_year is not None
+                    and FILING_YEAR.findall(document.title) != [request.filing_year]
+                )
+            ):
+                continue
+            assert chunk.table is not None
+            column = chunk.table.columns.index(request.year)
+            for row, values in enumerate(chunk.table.rows):
+                if not values or not values[0] or _metric(values[0]) != request.metric:
+                    continue
+                try:
+                    operand = _read_operand(CellReference(chunk.id, row, column), {chunk.id: chunk})
+                except UnverifiedCalculation:
+                    return None
+                matches.setdefault(operand.amount, (chunk, operand))
+        return next(iter(matches.values())) if len(matches) == 1 else None
 
     def search(
         self,
@@ -158,7 +209,7 @@ class HybridRetriever:
         passages = [search_text(chunk) for chunk in pool]
         if eligible is not None:
             passages = [
-                f"{self._annual_tables[chunk.id][2]}\n{passage}"
+                f"{self._annual_tables[chunk.id].heading}\n{passage}"
                 for chunk, passage in zip(pool, passages, strict=True)
             ]
         reranked = rerank(query, passages)

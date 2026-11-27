@@ -1,8 +1,14 @@
 from collections.abc import Sequence
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
+from finaudit_rag.answer_service import AnswerService
+from finaudit_rag.api import create_app
+from finaudit_rag.arithmetic import Operation
+from finaudit_rag.contracts import AnswerPlan
 from finaudit_rag.corpus import load_manifest
 from finaudit_rag.ingestion import Chunk, Table
 from finaudit_rag.retrieval import HybridRetriever, tokens
@@ -83,3 +89,58 @@ def test_calculation_ranks_source_eligible_tables_outside_the_dense_shortlist() 
     assert retriever.search(f"{question} using PDF page 265", [1.0], rerank) == []
     assert retriever.search(question.replace("standalone", "consolidated"), [1.0], rerank) == []
     assert retriever.search(question.replace("FY2025", "FY2029"), [1.0], rerank) == []
+
+
+@pytest.mark.parametrize("conflicting_amount", [False, True])
+def test_financial_lookup_verifies_one_annual_amount_without_model_calls(
+    conflicting_amount: bool,
+) -> None:
+    documents = {document.id: document for document in load_manifest(Path("data/corpus.json"))}
+    source_id = "infosys-fy25-annual"
+    table = Table(
+        (
+            "2.28 Function-wise classification of Statement of Profit and Loss",
+            "(In INR crore)",
+            "Year ended March 31,",
+        ),
+        ("Line item", "2025", "2024"),
+        (("Revenue from operations 2.18", "136592", "128933"),),
+    )
+    chunk = Chunk(f"{source_id}:264:table:0", source_id, 264, "table", "Revenue", table)
+    chunks = [chunk]
+    if conflicting_amount:
+        mismatch = replace(table, rows=(("Revenue from operations", "136592", "100000"),))
+        chunks.append(replace(chunk, id=f"{source_id}:264:table:1", table=mismatch))
+    search = HybridRetriever(SearchStore(chunks), "test", documents)
+
+    class UnexpectedPlanner:
+        def plan(
+            self, question: str, operation: Operation | None, evidence: Sequence[dict[str, str]]
+        ) -> AnswerPlan:
+            pytest.fail("A scoped single-value lookup called the model")
+
+    def unexpected_retrieval(_question: str) -> list[Chunk]:
+        pytest.fail("A scoped single-value lookup used external retrieval")
+
+    service = AnswerService(
+        documents, unexpected_retrieval, UnexpectedPlanner(), lookup=search.lookup
+    )
+    question = (
+        "What revenue from operations in INR crore did Infosys report "
+        "in its standalone FY2024 figures in the FY2025 filing?"
+    )
+    with TestClient(create_app(service)) as client:
+        response = client.post("/query", json={"question": question})
+        assert response.status_code == 200
+        body = response.json()
+        if conflicting_amount:
+            assert body["status"] == "abstained"
+            assert body["lookup"] is None
+        else:
+            assert body["status"] == "answered"
+            assert body["lookup"]["amount"] == "128933"
+            assert body["lookup"]["period"] == "FY2024"
+            assert body["lookup"]["scope"] == "standalone"
+            assert body["lookup"]["citation"]["page"] == 264
+        wrong_year = client.post("/query", json={"question": question.replace("FY2024", "FY2020")})
+        assert wrong_year.json()["status"] == "abstained"

@@ -81,7 +81,7 @@ def _runtime() -> tuple[AnswerService, Callable[[], None]]:
         if connection is not None:
             connection.close()
 
-    return AnswerService(documents, retrieve, planner, cache), close
+    return AnswerService(documents, retrieve, planner, cache, lookup=retriever.lookup), close
 
 
 def create_app(service: AnswerService | None = None) -> FastAPI:

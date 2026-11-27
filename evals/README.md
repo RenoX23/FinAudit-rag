@@ -71,3 +71,7 @@ The second candidate run used the same eight questions and the same model with e
 | Correct abstentions | 2 / 2 | 2 / 2 |
 
 The two financial lookup responses cited pages 31 and 74. Their excerpts presented numbers across multiple fiscal years and scopes, while the labeled answer requires a single standalone amount tied to its fiscal year. Both failed the reference citation check. The content term check accepted one of those excerpts, which illustrates why the score needs source review.
+
+The candidate with hybrid-annual-tables-v2 handles recognized single-amount questions locally. In a warm, uncached API check against the existing index, all 30 financial lookups matched the reference amount, year, scope, and unit. Request latency at p95 was 4.68 ms on the local test host, measured through FastAPI's in-process test client. The provider endpoint was disabled for this check.
+
+Twenty-six citations matched the original page labels. For the other four, the candidate used the consolidated statement on physical PDF page 277 of the Infosys annual report. Direct source review confirmed that page 277 and the labeled page 347 report the same FY2025 and FY2024 revenue and profit-before-tax values under the same scope and units. The automatic scorer retains the frozen reference pages. The runner records the verified cell's page as context for a structured lookup.

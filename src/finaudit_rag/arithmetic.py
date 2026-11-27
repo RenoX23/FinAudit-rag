@@ -23,6 +23,7 @@ MONEY_METRICS = (
     | {
         "gross profit",
         "net income",
+        "profit before exceptional item and tax",
         "profit before tax",
         "profit for the period",
         "profit for the year",

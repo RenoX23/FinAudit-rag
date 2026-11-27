@@ -21,3 +21,37 @@ Run both against the same immutable corpus and questions. Keep the embedding and
 | Latency and cost | Target warm uncached p95 at or below 10 seconds and provider inference cost at or below USD 0.50 per 100 queries. Report the cold path separately. Include all billed calls and report hosting costs separately from inference. |
 
 Report raw counts alongside percentages and include representative failures. Version the results and generate the README comparison table from the saved run. Run the same cases against both pipelines after any correction to a reference label.
+
+## Frozen cases and automatic scoring
+
+The four JSONL files in this directory contain 120 unique cases. Lookup references use groups of acceptable answer terms. A case matches when every group has at least one term in the answer. Calculations compare the decimal result within the labeled tolerance and require the expected unit. The source pages for calculations also identify the original metric, scope, fiscal year, and amount of each operand.
+
+The automatic scorer checks cited physical PDF pages against the reference list. Context precision is the proportion of supplied chunks from reference pages, including repeated chunks. Reference-grounded accuracy requires matching answer content and citations. It is an automatic proxy for faithfulness. Review additional or alternate valid evidence against the PDF before interpreting apparent errors.
+
+Run the numerical preflight after exporting the structured chunks:
+
+```sh
+python -m evals.preflight data/local/chunks-table-aware.jsonl
+```
+
+The preflight supplies verified reference cells from the labeled page and exercises the application checks without retrieval ranking or a model request. It diagnoses whether the application can use the required table evidence before a live run. Its counts describe this controlled check.
+
+Generate a summary from complete, saved observation files with:
+
+```sh
+python -m evals.score path/to/baseline.jsonl path/to/candidate.jsonl
+```
+
+## Running the comparison
+
+Index both exports in pgvector. Save the baseline collection ID in `data/local/baseline-collection.txt` and set the table-aware ID in `FINAUDIT_COLLECTION_ID`. Configure the same provider model for both runs, then run each pipeline sequentially:
+
+```sh
+python -m evals.run baseline data/local/benchmark/baseline.jsonl
+python -m evals.run candidate data/local/benchmark/candidate.jsonl
+python -m evals.score data/local/benchmark/baseline.jsonl data/local/benchmark/candidate.jsonl
+```
+
+Use `--pilot` with separate filenames to exercise the runner on two cases per category. A run saves completed observations and its configuration so the same command can resume after a provider rate limit. The runner records usage reported by successful provider responses and measures per-question time before the pause between requests.
+
+The numerical preflight identified reporting metadata missing from the text extraction. The application recovers verified annual headers for four TCS statement pages and the standalone heading for Infosys page 264 from the exact pinned source snapshots. The preflight cases informed that change. Report them as a fixed regression benchmark and reserve fresh cases for a blind assessment.

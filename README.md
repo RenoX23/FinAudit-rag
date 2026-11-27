@@ -39,7 +39,7 @@ Both exports preserve one-based PDF page references. The table-aware export keep
 
 ### Search the corpus
 
-Copy `.env.example` to `.env`, choose a local database password, and start pgvector with `docker compose up -d db`. Set `FINAUDIT_DATABASE_URL` to the connection URL for user `finaudit`, database `finaudit`, and `127.0.0.1:5433`. URL-encode special characters in the password.
+Copy `.env.example` to `.env`, choose a local database password, and start pgvector with `docker compose up -d db`. Set `FINAUDIT_DATABASE_URL` to the connection URL for user `finaudit`, database `finaudit`, and `127.0.0.1:5433`. If that port is occupied, set `FINAUDIT_POSTGRES_PORT` and use the same port in the connection URL. URL-encode special characters in the password.
 
 ```sh
 python -m finaudit_rag.retrieval index data/local/chunks-table-aware.jsonl --mode table-aware

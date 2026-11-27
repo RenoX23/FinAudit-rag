@@ -14,6 +14,7 @@ from finaudit_rag.contracts import (
     QueryResponse,
 )
 from finaudit_rag.corpus import Document
+from finaudit_rag.financial_headers import verified_financial_header
 from finaudit_rag.ingestion import Chunk
 from finaudit_rag.privacy import mask_sensitive_text
 
@@ -146,6 +147,11 @@ class AnswerService:
         chunks = dict(list(matching.items())[:5])
         if not chunks:
             return abstain("The corpus did not return usable evidence.")
+        if operation is not None:
+            chunks = {
+                chunk.id: verified_financial_header(self._documents[chunk.document_id], chunk)
+                for chunk in chunks.values()
+            }
         context = [
             {
                 "chunk_id": chunk.id,

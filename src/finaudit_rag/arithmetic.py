@@ -17,7 +17,18 @@ YEAR_ENDED = re.compile(r"\b(?:year|twelve months) ended\b", re.IGNORECASE)
 QUARTER_ENDED = re.compile(r"\b(?:quarter|three months) ended\b", re.IGNORECASE)
 PROFIT = {"operating profit", "profit from operations"}
 REVENUE = {"revenue", "revenue from operations"}
-MONEY_METRICS = PROFIT | REVENUE | {"gross profit", "net income", "profit before tax"}
+MONEY_METRICS = (
+    PROFIT
+    | REVENUE
+    | {
+        "gross profit",
+        "net income",
+        "profit before tax",
+        "profit for the period",
+        "profit for the year",
+        "total expenses",
+    }
+)
 
 
 class UnverifiedCalculation(ValueError):

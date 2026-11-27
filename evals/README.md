@@ -55,3 +55,7 @@ python -m evals.score data/local/benchmark/baseline.jsonl data/local/benchmark/c
 Use `--pilot` with separate filenames to exercise the runner on two cases per category. A run saves completed observations and its configuration so the same command can resume after a provider rate limit. The runner records usage reported by successful provider responses and measures per-question time before the pause between requests.
 
 The numerical preflight identified reporting metadata missing from the text extraction. The application recovers verified annual headers for four TCS statement pages and the standalone heading for Infosys page 264 from the exact pinned source snapshots. The preflight cases informed that change. Report them as a fixed regression benchmark and reserve fresh cases for a blind assessment.
+
+### Pilot findings
+
+The source-cell preflight verified 29 of 30 calculations. In the separate eight-case live pilot, the vector baseline matched 2 of 6 answerable cases and the candidate matched 3 of 6. Both pipelines correctly abstained on the two unanswerable cases and missed both calculations. The candidate's calculation context contained Infosys pages 31 or 32, while both reference calculations required page 264. The staged pilot resumed after provider rate limits. The complete comparison remains pending.

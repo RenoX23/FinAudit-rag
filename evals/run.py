@@ -21,7 +21,7 @@ from finaudit_rag.ingestion import Chunk
 from finaudit_rag.models import CpuModels
 from finaudit_rag.planner import PROMPT_VERSION, ChatPlanner, PlannerUnavailable
 from finaudit_rag.privacy import mask_sensitive_text
-from finaudit_rag.retrieval import HybridRetriever
+from finaudit_rag.retrieval import RETRIEVAL_VERSION, HybridRetriever
 from finaudit_rag.vector_store import PgChunkStore
 
 BASELINE_PROMPT = (
@@ -155,7 +155,7 @@ def main() -> None:
     )
     store = PgChunkStore(os.environ["FINAUDIT_DATABASE_URL"])
     models = CpuModels(Path("data/local/models"))
-    hybrid = HybridRetriever(store, collection) if args.mode == "candidate" else None
+    hybrid = HybridRetriever(store, collection, docs) if args.mode == "candidate" else None
     args.output.parent.mkdir(parents=True, exist_ok=True)
     identity = {
         "mode": args.mode,
@@ -169,6 +169,8 @@ def main() -> None:
             "\n".join(case.model_dump_json() for case in cases).encode()
         ).hexdigest(),
     }
+    if hybrid is not None:
+        identity["retrieval"] = RETRIEVAL_VERSION
     metadata = args.output.with_suffix(".meta.json")
     if metadata.exists():
         if json.loads(metadata.read_text(encoding="utf-8")) != identity:

@@ -7,13 +7,17 @@ import math
 import os
 import re
 from collections import defaultdict
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict
 from pathlib import Path
 from typing import Protocol
 
 from rank_bm25 import BM25Okapi
 
+from finaudit_rag.answer_service import PDF_PAGE, SCOPE, _operation, _years
+from finaudit_rag.arithmetic import FY, INR_CRORE, QUARTER_ENDED, YEAR_ENDED
+from finaudit_rag.corpus import Document, load_manifest
+from finaudit_rag.financial_headers import verified_financial_header
 from finaudit_rag.ingestion import Chunk, chunk_from_record
 from finaudit_rag.models import EMBEDDING_REVISION, CpuModels
 from finaudit_rag.vector_store import PgChunkStore
@@ -21,6 +25,7 @@ from finaudit_rag.vector_store import PgChunkStore
 WORDS = re.compile(r"\w+(?:[./-]\w+)*")
 CIRCULAR_ID = re.compile(r"(?<!\w)[a-z]{2,}(?:/[a-z\d.-]+)+/\d+(?!\w)", re.IGNORECASE)
 MAX_CANDIDATES = 20
+RETRIEVAL_VERSION = "hybrid-annual-tables-v1"
 
 
 class ChunkStore(Protocol):
@@ -49,13 +54,53 @@ def search_text(chunk: Chunk) -> str:
 class HybridRetriever:
     """Combine BM25 and cosine ranks, then score the evidence with a cross-encoder."""
 
-    def __init__(self, store: ChunkStore, collection_id: str) -> None:
+    def __init__(
+        self, store: ChunkStore, collection_id: str, documents: Mapping[str, Document]
+    ) -> None:
         self._store = store
         self._collection_id = collection_id
+        self._documents = documents
         self._chunks = store.list_chunks(collection_id)
         if not self._chunks:
             raise ValueError(f"unknown or empty chunk collection {collection_id}")
+        self._annual_tables: dict[str, tuple[set[str], set[str], str]] = {}
+        for chunk in self._chunks:
+            document = documents.get(chunk.document_id)
+            if document is None or chunk.kind != "table" or not 1 <= chunk.page <= document.pages:
+                continue
+            verified = verified_financial_header(document, chunk)
+            if verified.table is None:
+                continue
+            heading = "\n".join(verified.table.context)
+            columns = verified.table.columns
+            years = {
+                label for label in columns[1:] if FY.fullmatch(label) and columns.count(label) == 1
+            }
+            if not years or not YEAR_ENDED.search(heading) or QUARTER_ENDED.search(heading):
+                continue
+            if not INR_CRORE.search(heading):
+                continue
+            self._annual_tables[chunk.id] = (years, set(SCOPE.findall(heading.casefold())), heading)
         self._lexical = BM25Okapi([tokens(search_text(chunk)) for chunk in self._chunks])
+
+    def _calculation_candidates(self, query: str) -> set[str]:
+        issuers = {
+            document.issuer.casefold()
+            for document in self._documents.values()
+            if re.search(rf"\b{re.escape(document.issuer)}\b", query, re.IGNORECASE)
+        }
+        pages = {int(page) for page in PDF_PAGE.findall(query)}
+        years = _years(query, include_bare=True)
+        scopes = set(SCOPE.findall(query.casefold()))
+        return {
+            chunk.id
+            for chunk in self._chunks
+            if (metadata := self._annual_tables.get(chunk.id)) is not None
+            and (not pages or chunk.page in pages)
+            and (not issuers or self._documents[chunk.document_id].issuer.casefold() in issuers)
+            and years.issubset(metadata[0])
+            and (not scopes or (len(scopes) == 1 and scopes == metadata[1]))
+        }
 
     def search(
         self,
@@ -65,11 +110,15 @@ class HybridRetriever:
         limit: int = 5,
     ) -> list[Chunk]:
         """Return reranked evidence while protecting exact primary circular IDs."""
+        eligible = self._calculation_candidates(query) if _operation(query) is not None else None
+        if eligible == set():
+            return []
         query_ids = {match.casefold() for match in CIRCULAR_ID.findall(query)}
         exact = [
             chunk
             for chunk in self._chunks
-            if query_ids
+            if eligible is None
+            and query_ids
             and chunk.page == 1
             and any(
                 identifier.casefold() in query_ids
@@ -80,13 +129,21 @@ class HybridRetriever:
         ][:MAX_CANDIDATES]
         lexical_scores = self._lexical.get_scores(tokens(query))
         lexical = sorted(
-            range(len(self._chunks)),
+            (
+                index
+                for index, chunk in enumerate(self._chunks)
+                if eligible is None or chunk.id in eligible
+            ),
             key=lambda index: (-lexical_scores[index], self._chunks[index].id),
         )
         sparse = [
-            self._chunks[index] for index in lexical[:MAX_CANDIDATES] if lexical_scores[index] > 0
+            self._chunks[index]
+            for index in lexical[:MAX_CANDIDATES]
+            if eligible is not None or lexical_scores[index] > 0
         ]
         dense = self._store.cosine_search(self._collection_id, vector, MAX_CANDIDATES)
+        if eligible is not None:
+            dense = [chunk for chunk in dense if chunk.id in eligible]
         scores: dict[str, float] = defaultdict(float)
         candidates: dict[str, Chunk] = {}
         for ranked in (sparse, dense):
@@ -98,7 +155,13 @@ class HybridRetriever:
         pool = list({chunk.id: chunk for chunk in (*exact, *fused)}.values())[:MAX_CANDIDATES]
         if not pool:
             return []
-        reranked = rerank(query, [search_text(chunk) for chunk in pool])
+        passages = [search_text(chunk) for chunk in pool]
+        if eligible is not None:
+            passages = [
+                f"{self._annual_tables[chunk.id][2]}\n{passage}"
+                for chunk, passage in zip(pool, passages, strict=True)
+            ]
+        reranked = rerank(query, passages)
         if len(reranked) != len(pool) or not all(math.isfinite(score) for score in reranked):
             raise ValueError("reranker returned invalid scores")
         exact_ids = {chunk.id for chunk in exact}
@@ -157,7 +220,9 @@ def main() -> None:
     if args.collection_id.startswith("baseline:"):
         hits = store.cosine_search(args.collection_id, vector, 5)
     else:
-        hits = HybridRetriever(store, args.collection_id).search(
+        manifest = Path(os.environ.get("FINAUDIT_MANIFEST", "data/corpus.json"))
+        documents = {document.id: document for document in load_manifest(manifest)}
+        hits = HybridRetriever(store, args.collection_id, documents).search(
             args.question, vector, models.rerank
         )
     print(json.dumps([asdict(chunk) for chunk in hits], indent=2))

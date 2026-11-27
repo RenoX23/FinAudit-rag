@@ -25,3 +25,8 @@ def test_masks_complete_grouped_and_wrapped_identifiers() -> None:
     masked = mask_sensitive_text(original)
     assert masked.text == "Account number: [ACCOUNT]\nA/c no. [ACCOUNT].\nAadhaar [AADHAAR]."
     assert masked.replacements == 3
+
+
+def test_masks_account_labeled_with_colon() -> None:
+    masked = mask_sensitive_text("Bank account: 4321-789012.")
+    assert masked.text == "Bank account: [ACCOUNT]."

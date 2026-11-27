@@ -90,15 +90,24 @@ def test_policy_answer_cites_exact_page_and_masks_outbound_text() -> None:
     assert body["redacted_question"].endswith("[PAN]")
 
 
-def test_routes_numeric_question_and_returns_python_result_with_input_citations() -> None:
+@pytest.mark.parametrize("incomplete_first", [False, True])
+def test_routes_numeric_question_and_returns_python_result_with_input_citations(
+    incomplete_first: bool,
+) -> None:
     operands = [
         {"chunk_id": TABLE.id, "row": row, "column": column} for column in (1, 2) for row in (0, 1)
     ]
 
+    attempts = 0
+
     def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
         payload = json.loads(json.loads(request.content)["messages"][1]["content"])
         assert payload["operation"] == "operating_margin_change"
         assert "row 0:" in payload["evidence"][0]["text"]
+        if incomplete_first and attempts == 1:
+            return completion({"decision": "calculation", "operands": [operands[0]] * 4})
         return completion({"decision": "calculation", "operands": operands})
 
     with TestClient(create_app(service(TABLE, handler))) as client:
@@ -106,6 +115,7 @@ def test_routes_numeric_question_and_returns_python_result_with_input_citations(
             "/query", json={"question": "What was the standalone operating margin change in FY25?"}
         )
     assert reply.status_code == 200
+    assert attempts == (2 if incomplete_first else 1)
     body = reply.json()
     assert body["calculation"]["result"] == "0.26"
     assert body["calculation"]["unit"] == "percentage points"
@@ -119,6 +129,8 @@ def test_routes_numeric_question_and_returns_python_result_with_input_citations(
         "What was the operating margin in 2029?",
         "What was the Q4 FY2025 operating margin?",
         "What was the March 2025 operating margin?",
+        "What was the operating margin on 2025-12-31?",
+        "What was the September FY2025 operating margin?",
     ],
 )
 def test_abstains_on_missing_or_subannual_period_without_calling_model(question: str) -> None:

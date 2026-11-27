@@ -59,7 +59,7 @@ Start the database and index the table-aware export. Set `FINAUDIT_DATABASE_URL`
 python -m uvicorn finaudit_rag.api:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-`GET /healthz` checks that the process is responding. Send a JSON object with a `question` field to `POST /query`. An answer contains page-cited source excerpts or a Python calculation and its cited operands. An abstention includes the reason. Calculations require annual figures labeled in INR crore with consistent source headings. Provider and database failures return structured 503 errors.
+`GET /healthz` checks that the process is responding. Send a JSON object with a `question` field to `POST /query`. An answer contains page-cited source excerpts or a Python calculation and its cited operands. An abstention includes the reason. Use fiscal years such as FY2025 in calculation questions. Figures must use INR crore and consistent source headings. Provider and database failures return structured 503 errors.
 
 PAN, Aadhaar, email addresses, and labeled account numbers are masked before the model receives queries or excerpts. Set `FINAUDIT_REDIS_URL` to enable the optional cache. It keys entries to the exact question, indexed corpus, and model configuration. Queries with detected identifiers bypass caching.
 

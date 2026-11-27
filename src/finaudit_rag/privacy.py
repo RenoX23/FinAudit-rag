@@ -7,7 +7,8 @@ EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w.-]+\.[a-z]{2,}(?![\w-]|\.[\w-])", 
 PAN = re.compile(r"\b[A-Z]{5}\d{4}[A-Z]\b", re.IGNORECASE)
 AADHAAR = re.compile(r"(?<!\w)[2-9]\d{3}[\s–-]*\d{4}[\s–-]*\d{4}(?!\w)")
 ACCOUNT = re.compile(
-    r"(?i)(\b(?:bank\s+)?(?:account|acct|a/c)\s+(?:number|no\.?|#)\s*[:#|–-]?\s*)"
+    r"(?i)(\b(?:bank\s+)?(?:account|acct|a/c)\b"
+    r"(?:\s+(?:number\b|no\b\.?)\s*[:#|–-]?|\s*[:#|])\s*)"
     r"(\d(?:[\s–-]*\d)*)(?!\w)"
 )
 

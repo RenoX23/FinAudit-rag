@@ -35,9 +35,10 @@ SUBANNUAL = re.compile(
 MONTH = re.compile(
     r"\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|"
     r"Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+"
-    r"(?:\d{1,2},?\s+)?(?:19|20|21)\d{2}\b",
+    r"(?:\d{1,2},?\s+)?(?:(?:19|20|21)\d{2}|FY\s*(?:20)?\d{2})\b",
     re.IGNORECASE,
 )
+ISO_DATE = re.compile(r"\b(?:19|20|21)\d{2}-\d{2}-\d{2}\b")
 
 
 class Planner(Protocol):
@@ -116,10 +117,9 @@ class AnswerService:
         if LIVE_RULE.search(question):
             return abstain("The corpus contains dated source snapshots.")
         if operation is not None and (
-            SUBANNUAL.search(question)
-            or (MONTH.search(question) and "year ended" not in question.casefold())
+            SUBANNUAL.search(question) or MONTH.search(question) or ISO_DATE.search(question)
         ):
-            return abstain("Calculations require annual reporting periods.")
+            return abstain("Calculations require fiscal-year labels without a specific date.")
         if operation is None and UNSUPPORTED_INSTRUCTION.search(question.casefold()):
             return abstain("The requested calculation is outside the supported operations.")
         issuers = {

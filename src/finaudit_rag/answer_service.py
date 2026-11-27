@@ -4,7 +4,15 @@ import re
 from collections.abc import Callable, Mapping, Sequence
 from typing import Protocol
 
-from finaudit_rag.arithmetic import CellReference, Operation, UnverifiedCalculation, calculate
+from finaudit_rag.arithmetic import (
+    FY,
+    MONEY_METRICS,
+    CellReference,
+    Operation,
+    UnverifiedCalculation,
+    _metric,
+    calculate,
+)
 from finaudit_rag.contracts import (
     AnswerPlan,
     CalculationResult,
@@ -76,10 +84,17 @@ def _source_text(chunk: Chunk) -> str:
     if chunk.table is None:
         source = mask_sensitive_text(chunk.text).text
         return "\n".join(f"line {index}: {line}" for index, line in enumerate(source.splitlines()))
-    headers = " | ".join(f"{index}={label}" for index, label in enumerate(chunk.table.columns))
+    annual = [
+        (index, label)
+        for index, label in enumerate(chunk.table.columns)
+        if index and FY.fullmatch(label)
+    ]
+    headers = " | ".join(f"{index}={label}" for index, label in annual)
     rows = [
-        f"row {index}: " + " | ".join(cell or "" for cell in row)
+        f"row {index}: {row[0]} | "
+        + " | ".join(f"{column}={row[column] or ''}" for column, _ in annual if column < len(row))
         for index, row in enumerate(chunk.table.rows)
+        if row and row[0] and _metric(row[0]) in MONEY_METRICS
     ]
     return "\n".join([*chunk.table.context, f"columns: {headers}", *rows])
 

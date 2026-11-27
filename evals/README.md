@@ -58,4 +58,4 @@ The numerical preflight identified reporting metadata missing from the text extr
 
 ### Pilot findings
 
-The source-cell preflight verified 29 of 30 calculations. In the separate eight-case live pilot, the vector baseline matched 2 of 6 answerable cases and the candidate matched 3 of 6. Both pipelines correctly abstained on the two unanswerable cases and missed both calculations. The candidate's calculation context contained Infosys pages 31 or 32, while both reference calculations required page 264. The staged pilot resumed after provider rate limits. The complete comparison remains pending.
+The source-cell preflight verified 29 of 30 calculations. In the separate eight-case live pilot with evidence-selection-v3, the vector baseline matched 2 of 6 answerable cases and the candidate matched 3 of 6. Both pipelines correctly abstained on the two unanswerable cases and missed both calculations. The candidate's calculation context contained Infosys pages 31 or 32, while both reference calculations required page 264. The staged pilot resumed after provider rate limits. The complete comparison remains pending.

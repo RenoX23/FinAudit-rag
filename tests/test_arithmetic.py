@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from finaudit_rag.answer_service import _source_text
 from finaudit_rag.arithmetic import CellReference, UnverifiedCalculation, calculate
 from finaudit_rag.corpus import load_manifest
 from finaudit_rag.financial_headers import verified_financial_header
@@ -37,10 +38,19 @@ def test_verified_source_uses_annual_columns_and_rejects_quarters() -> None:
                 "March 31, 2025 (column 4)",
                 "March 31, 2024 (column 5)",
             ),
-            (("Revenue from operations", "64,479", "63,973", "61,237", "2,55,324", "2,40,893"),),
+            (
+                ("Revenue from operations", "64,479", "63,973", "61,237", "2,55,324", "2,40,893"),
+                ("Account number", "", "", "", "123456789", "987654321"),
+            ),
         ),
     )
     verified = verified_financial_header(source, chunk)
+    evidence = _source_text(verified)
+    assert "4=2025 | 5=2024" in evidence
+    assert "4=2,55,324 | 5=2,40,893" in evidence
+    assert "64,479" not in evidence
+    assert "Account number" not in evidence
+    assert "123456789" not in evidence
     cells = {chunk.id: verified}
     result = calculate("yoy_change", [CellReference(chunk.id, 0, n) for n in (4, 5)], cells)
     assert result.result == Decimal("5.99")

@@ -59,3 +59,15 @@ The numerical preflight identified reporting metadata missing from the text extr
 ### Pilot findings
 
 The source-cell preflight verified 29 of 30 calculations. In the separate eight-case live pilot with evidence-selection-v3, the vector baseline matched 2 of 6 answerable cases and the candidate matched 3 of 6. Both pipelines correctly abstained on the two unanswerable cases and missed both calculations. The candidate's calculation context contained Infosys pages 31 or 32, while both reference calculations required page 264. The staged pilot resumed after provider rate limits. The complete comparison remains pending.
+
+The second candidate run used the same eight questions and the same model with evidence-selection-v4 and hybrid-annual-tables-v1. Calculation retrieval restricted the candidate pool to annual tables using the requested issuer, fiscal years, reporting scope, and PDF page when specified. The reference calculation pages appeared in the top five for all 30 fixed cases. This measures retrieval only.
+
+| Live pilot metric | Vector baseline | Updated candidate |
+|---|---:|---:|
+| Answer content matched | 2 / 6 | 5 / 6 |
+| Answered cases with reference citations | 3 / 5 | 4 / 6 |
+| Correct content and reference citations | 1 / 6 | 4 / 6 |
+| Correct calculations | 0 / 2 | 2 / 2 |
+| Correct abstentions | 2 / 2 | 2 / 2 |
+
+The two financial lookup responses cited pages 31 and 74. Their excerpts presented numbers across multiple fiscal years and scopes, while the labeled answer requires a single standalone amount tied to its fiscal year. Both failed the reference citation check. The content term check accepted one of those excerpts, which illustrates why the score needs source review.

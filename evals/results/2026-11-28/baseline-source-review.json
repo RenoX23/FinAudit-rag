@@ -1,0 +1,608 @@
+{
+  "review_time_utc": "2026-11-28T15:19:47.548070+00:00",
+  "revision": "c291cf732a7f31c3fecf47465097223d4480fa76",
+  "baseline_sha256": "e97f94384c2fa20d56e8dc3ed9535a7f3a4831638da13363a6ff0e58a1fd1222",
+  "baseline_financial_manual_counts": {
+    "correct_supported": 15,
+    "wrong": 9,
+    "abstained": 2,
+    "error": 4
+  },
+  "baseline_financial": [
+    {
+      "id": "fin-01",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": true,
+      "scope": "standalone",
+      "fiscal_year": 2025,
+      "query": "What revenue from operations in INR crore did Infosys report in its standalone FY2025 figures in the FY2025 filing?",
+      "expected": "1,36,592 INR crore.",
+      "response": "Infosys reported revenue from operations of 1,36,592 crore INR in its standalone FY2025 figures.",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 197
+        }
+      ]
+    },
+    {
+      "id": "fin-02",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2024,
+      "query": "What revenue from operations in INR crore did Infosys report in its standalone FY2024 figures in the FY2025 filing?",
+      "expected": "1,28,933 INR crore.",
+      "response": "1,28,933 crore",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 264
+        }
+      ]
+    },
+    {
+      "id": "fin-03",
+      "verdict": "wrong",
+      "reason": "Consolidated FY2025 gross profit 49643 was supplied for standalone gross profit 42481.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2025,
+      "query": "What gross profit in INR crore did Infosys report in its standalone FY2025 figures in the FY2025 filing?",
+      "expected": "42,481 INR crore.",
+      "response": "Infosys reported a gross profit of \u20b949,643 crore in its standalone FY2025 figures.",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 347
+        }
+      ]
+    },
+    {
+      "id": "fin-04",
+      "verdict": "wrong",
+      "reason": "Consolidated FY2024 gross profit 46257 was supplied for standalone gross profit 39901.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2024,
+      "query": "What gross profit in INR crore did Infosys report in its standalone FY2024 figures in the FY2025 filing?",
+      "expected": "39,901 INR crore.",
+      "response": "46,257",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 347
+        }
+      ]
+    },
+    {
+      "id": "fin-05",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2025,
+      "query": "What operating profit in INR crore did Infosys report in its standalone FY2025 figures in the FY2025 filing?",
+      "expected": "30,880 INR crore.",
+      "response": "30,880",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 264
+        }
+      ]
+    },
+    {
+      "id": "fin-06",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2024,
+      "query": "What operating profit in INR crore did Infosys report in its standalone FY2024 figures in the FY2025 filing?",
+      "expected": "28,813 INR crore.",
+      "response": "28,813",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 264
+        }
+      ]
+    },
+    {
+      "id": "fin-07",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": true,
+      "scope": "standalone",
+      "fiscal_year": 2025,
+      "query": "What profit before tax in INR crore did Infosys report in its standalone FY2025 figures in the FY2025 filing?",
+      "expected": "35,441 INR crore.",
+      "response": "35,441",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 197
+        },
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 264
+        }
+      ]
+    },
+    {
+      "id": "fin-08",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": true,
+      "scope": "standalone",
+      "fiscal_year": 2024,
+      "query": "What profit before tax in INR crore did Infosys report in its standalone FY2024 figures in the FY2025 filing?",
+      "expected": "35,953 INR crore.",
+      "response": "35,953",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 197
+        }
+      ]
+    },
+    {
+      "id": "fin-09",
+      "verdict": "wrong",
+      "reason": "Amount 25.5 crore is unsupported; standalone FY2025 profit is 25568 crore.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2025,
+      "query": "What profit for the year in INR crore did Infosys report in its standalone FY2025 figures in the FY2025 filing?",
+      "expected": "25,568 INR crore.",
+      "response": "The standalone FY2025 profit for the year reported by Infosys was \u20b925.5\u202fcrore.",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 197
+        }
+      ]
+    },
+    {
+      "id": "fin-10",
+      "verdict": "wrong",
+      "reason": "Standalone FY2025 profit 25568 was supplied for standalone FY2024 profit 27234.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2024,
+      "query": "What profit for the year in INR crore did Infosys report in its standalone FY2024 figures in the FY2025 filing?",
+      "expected": "27,234 INR crore.",
+      "response": "25,568",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 31
+        }
+      ]
+    },
+    {
+      "id": "fin-11",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": true,
+      "scope": "consolidated",
+      "fiscal_year": 2025,
+      "query": "What revenue from operations in INR crore did Infosys report in its consolidated FY2025 figures in the FY2025 filing?",
+      "expected": "1,62,990 INR crore.",
+      "response": "162,990",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 277
+        }
+      ]
+    },
+    {
+      "id": "fin-12",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": true,
+      "scope": "consolidated",
+      "fiscal_year": 2024,
+      "query": "What revenue from operations in INR crore did Infosys report in its consolidated FY2024 figures in the FY2025 filing?",
+      "expected": "1,53,670 INR crore.",
+      "response": "153,670",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 277
+        },
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 347
+        }
+      ]
+    },
+    {
+      "id": "fin-13",
+      "verdict": "abstained",
+      "reason": "No substantive answer was returned.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2025,
+      "query": "What gross profit in INR crore did Infosys report in its consolidated FY2025 figures in the FY2025 filing?",
+      "expected": "49,643 INR crore.",
+      "response": "",
+      "citations": []
+    },
+    {
+      "id": "fin-14",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2024,
+      "query": "What gross profit in INR crore did Infosys report in its consolidated FY2024 figures in the FY2025 filing?",
+      "expected": "46,257 INR crore.",
+      "response": "Infosys reported a gross profit of \u20b946,257 crore in its consolidated FY2024 figures.",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 347
+        }
+      ]
+    },
+    {
+      "id": "fin-15",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2025,
+      "query": "What operating profit in INR crore did Infosys report in its consolidated FY2025 figures in the FY2025 filing?",
+      "expected": "34,424 INR crore.",
+      "response": "34,424",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 347
+        }
+      ]
+    },
+    {
+      "id": "fin-16",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2024,
+      "query": "What operating profit in INR crore did Infosys report in its consolidated FY2024 figures in the FY2025 filing?",
+      "expected": "31,747 INR crore.",
+      "response": "The operating profit reported by Infosys for the year ended March\u202f31,\u202f2024 (consolidated FY2024 figures) was \u20b931,747\u202fcrore.",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 347
+        }
+      ]
+    },
+    {
+      "id": "fin-17",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": true,
+      "scope": "consolidated",
+      "fiscal_year": 2025,
+      "query": "What profit before tax in INR crore did Infosys report in its consolidated FY2025 figures in the FY2025 filing?",
+      "expected": "37,608 INR crore.",
+      "response": "37,608",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 277
+        },
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 347
+        }
+      ]
+    },
+    {
+      "id": "fin-18",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": true,
+      "scope": "consolidated",
+      "fiscal_year": 2024,
+      "query": "What profit before tax in INR crore did Infosys report in its consolidated FY2024 figures in the FY2025 filing?",
+      "expected": "35,988 INR crore.",
+      "response": "35,988",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 277
+        }
+      ]
+    },
+    {
+      "id": "fin-19",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2025,
+      "query": "What profit for the period in INR crore did Infosys report in its consolidated FY2025 figures in the FY2025 filing?",
+      "expected": "26,750 INR crore.",
+      "response": "26,750",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 347
+        }
+      ]
+    },
+    {
+      "id": "fin-20",
+      "verdict": "wrong",
+      "reason": "Standalone FY2024 profit 27234 was supplied for consolidated FY2024 profit 26248.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2024,
+      "query": "What profit for the period in INR crore did Infosys report in its consolidated FY2024 figures in the FY2025 filing?",
+      "expected": "26,248 INR crore.",
+      "response": "27,234",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 31
+        }
+      ]
+    },
+    {
+      "id": "fin-21",
+      "verdict": "correct_supported",
+      "reason": "Amount matches the requested metric, reporting year, scope, and unit on the cited source page.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2025,
+      "query": "What revenue from operations in INR crore did TCS report in its consolidated FY2025 figures in the FY2025 filing?",
+      "expected": "2,55,324 INR crore.",
+      "response": "TCS reported revenue from operations of 2,55,324 crore in its consolidated FY2025 figures.",
+      "citations": [
+        {
+          "document_id": "tcs-fy25-q4",
+          "page": 7
+        }
+      ]
+    },
+    {
+      "id": "fin-22",
+      "verdict": "wrong",
+      "reason": "Infosys consolidated expenses 128982 were supplied for TCS consolidated expenses 193955.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2025,
+      "query": "What total expenses in INR crore did TCS report in its consolidated FY2025 figures in the FY2025 filing?",
+      "expected": "1,93,955 INR crore.",
+      "response": "128,982",
+      "citations": [
+        {
+          "document_id": "infosys-fy25-annual",
+          "page": 277
+        }
+      ]
+    },
+    {
+      "id": "fin-23",
+      "verdict": "wrong",
+      "reason": "TCS consolidated quarter profit 16402 was supplied for annual profit 65331.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2025,
+      "query": "What profit before exceptional item and tax in INR crore did TCS report in its consolidated FY2025 figures in the FY2025 filing?",
+      "expected": "65,331 INR crore.",
+      "response": "TCS reported a profit before exceptional item and tax of 16,402\u202fINR crore in its consolidated FY2025 figures.",
+      "citations": [
+        {
+          "document_id": "tcs-fy25-q4",
+          "page": 7
+        }
+      ]
+    },
+    {
+      "id": "fin-24",
+      "verdict": "error",
+      "reason": "No substantive answer was returned.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2025,
+      "query": "What profit before tax in INR crore did TCS report in its consolidated FY2025 figures in the FY2025 filing?",
+      "expected": "65,331 INR crore.",
+      "response": "",
+      "citations": []
+    },
+    {
+      "id": "fin-25",
+      "verdict": "error",
+      "reason": "No substantive answer was returned.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "consolidated",
+      "fiscal_year": 2025,
+      "query": "What profit for the year in INR crore did TCS report in its consolidated FY2025 figures in the FY2025 filing?",
+      "expected": "48,797 INR crore.",
+      "response": "",
+      "citations": []
+    },
+    {
+      "id": "fin-26",
+      "verdict": "wrong",
+      "reason": "TCS standalone quarter revenue 54136 was supplied for annual revenue 214853.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2025,
+      "query": "What revenue from operations in INR crore did TCS report in its standalone FY2025 figures in the FY2025 filing?",
+      "expected": "2,14,853 INR crore.",
+      "response": "54,136",
+      "citations": [
+        {
+          "document_id": "tcs-fy25-q4",
+          "page": 16
+        }
+      ]
+    },
+    {
+      "id": "fin-27",
+      "verdict": "abstained",
+      "reason": "No substantive answer was returned.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2025,
+      "query": "What total expenses in INR crore did TCS report in its standalone FY2025 figures in the FY2025 filing?",
+      "expected": "1,61,847 INR crore.",
+      "response": "",
+      "citations": []
+    },
+    {
+      "id": "fin-28",
+      "verdict": "wrong",
+      "reason": "TCS consolidated quarter profit 16402 was supplied for standalone annual profit 62648.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2025,
+      "query": "What profit before exceptional item and tax in INR crore did TCS report in its standalone FY2025 figures in the FY2025 filing?",
+      "expected": "62,648 INR crore.",
+      "response": "TCS reported a profit before exceptional item and tax of 16,402\u202fcrore INR in its standalone FY2025 figures.",
+      "citations": [
+        {
+          "document_id": "tcs-fy25-q4",
+          "page": 7
+        }
+      ]
+    },
+    {
+      "id": "fin-29",
+      "verdict": "error",
+      "reason": "No substantive answer was returned.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2025,
+      "query": "What profit before tax in INR crore did TCS report in its standalone FY2025 figures in the FY2025 filing?",
+      "expected": "62,648 INR crore.",
+      "response": "",
+      "citations": []
+    },
+    {
+      "id": "fin-30",
+      "verdict": "error",
+      "reason": "No substantive answer was returned.",
+      "valid_alternate_or_additional_pages": false,
+      "scope": "standalone",
+      "fiscal_year": 2025,
+      "query": "What profit for the year in INR crore did TCS report in its standalone FY2025 figures in the FY2025 filing?",
+      "expected": "48,057 INR crore.",
+      "response": "",
+      "citations": []
+    }
+  ],
+  "additional_baseline_manual_samples": [
+    {
+      "id": "reg-02",
+      "verdict": "wrong",
+      "reason": "RBI physical page 2 question 5(b) permits Form60 in place of PAN; the answer incorrectly supplies OVDs listed in separate requirement5(a)."
+    },
+    {
+      "id": "reg-14",
+      "verdict": "content_correct_citation_wrong",
+      "reason": "SMARTODR matches the requested investment-adviser charter page5; cited stock-broker charter page7 concerns a different intermediary and document."
+    },
+    {
+      "id": "reg-29",
+      "verdict": "content_correct_citation_unsupported",
+      "reason": "The 15-day second-review answer matches the reference, but the cited SCORES physical page2 covers implementation dates,21-day ATR submission,and rescission, without supporting this review interval."
+    },
+    {
+      "id": "reg-35",
+      "verdict": "correct_supported",
+      "reason": "December4,2023 is supported by both the cited extension page1 and original SCORES page2. Additional valid corroborating page should not invalidate the answer."
+    },
+    {
+      "id": "unanswerable-03",
+      "verdict": "false_answer_wrong_issuer",
+      "reason": "Attributes Infosys consolidated revenue162990 on page277 to Wipro, which has no filing in the pinned corpus."
+    },
+    {
+      "id": "unanswerable-05",
+      "verdict": "false_answer_wrong_issuer",
+      "reason": "Attributes the same Infosys revenue162990 to Reliance, which has no filing in the pinned corpus."
+    },
+    {
+      "id": "unanswerable-14",
+      "verdict": "false_answer_unsupported_rule",
+      "reason": "Cited Infosys page71 discusses corporate governance policies and Regulation21 risk-management policy, not a current research-analyst AI-disclosure rule."
+    },
+    {
+      "id": "unanswerable-21",
+      "verdict": "false_answer_ambiguous_scope",
+      "reason": "Question omits reporting scope; cited Infosys page293 contains goodwill impairment assumptions and projected operating margins19-21, not actual FY2024/FY2025 reported operating-margin change."
+    }
+  ],
+  "source_checks": {
+    "infosys-fy25-annual": {
+      "sha256": "6224d11244d3f44f7e95901428a8ff23164f383cd1960e02a47483c48612a3c5",
+      "reviewed_physical_pages": [
+        31,
+        71,
+        182,
+        197,
+        264,
+        265,
+        277,
+        293,
+        347
+      ]
+    },
+    "tcs-fy25-q4": {
+      "sha256": "10ae2cfd51f966036774091acf830e31ed6f1d330dd63b4a13763607787d6fb7",
+      "reviewed_physical_pages": [
+        7,
+        16
+      ]
+    },
+    "tcs-fy24-q4": {
+      "sha256": "e1b9367f93ba7a31c01945fab2f57a2037954c5be4bfdca436b151306887e988",
+      "reviewed_physical_pages": [
+        7,
+        16
+      ]
+    },
+    "rbi-kyc-faq-2025-06": {
+      "sha256": "a0532fbb8b096053ba1cec6b5ac83393f59fa3f034e6c5f68f623b51e4baa001",
+      "reviewed_physical_pages": [
+        2
+      ]
+    },
+    "sebi-investor-charter-2025-06": {
+      "sha256": "523185baf645484d06857df3eb8296915f532abe1da4ffe6159d825924078680",
+      "reviewed_physical_pages": [
+        4,
+        5
+      ]
+    },
+    "sebi-stock-broker-charter-2025-02": {
+      "sha256": "fe87eeb3aebbe0d3811f41146f0bb99510e96e76553da94227d14aef0c7f61f8",
+      "reviewed_physical_pages": [
+        7
+      ]
+    },
+    "sebi-scores-2023-09": {
+      "sha256": "26c230d804f1bbfd190e8187698276544a4a025b4a9f74a23e72b11a0abff40b",
+      "reviewed_physical_pages": [
+        2
+      ]
+    },
+    "sebi-scores-extension-2023-12": {
+      "sha256": "90139d2e214cd27eae9ed5942c628803fde27de50b64f10db31d8aed4d6d6dba",
+      "reviewed_physical_pages": [
+        1
+      ]
+    }
+  }
+}

@@ -4,7 +4,7 @@ FinAudit-RAG is a source-cited question answering project for financial filings 
 
 The first release will cover a fixed collection of public, digital-text Indian company filings and RBI or SEBI documents. A policy lookup should cite the PDF page. A calculation should show its cited inputs, period, units, and Python-computed result. A question without sufficient evidence should yield an explicit abstention.
 
-**Status** — PDF ingestion, retrieval, and answering API. Benchmark results and the public demo are pending.
+**Status** — Ingestion, retrieval, the answering API, and a complete 120-case benchmark are implemented. Phase 3 acceptance review and the public web application are pending.
 
 ## Development setup
 
@@ -49,7 +49,17 @@ python -m finaudit_rag.retrieval search COLLECTION_ID "Find SEBI/HO/MIRSD/MIRSD-
 
 Use the ID printed by the corresponding index command in place of `COLLECTION_ID`. The baseline returns cosine matches. Table-aware retrieval combines BM25 and cosine ranks, then applies a CPU reranker. Model snapshots download on first use to the ignored model cache. Queries and evidence are processed locally by both retrieval models. The search command prints evidence and PDF page numbers.
 
-The benchmark will run fixed-size chunking and vector-only retrieval against the upgraded pipeline on the same held-out questions. The [evaluation protocol](evals/README.md) defines the labels, measurements, and release criteria.
+Both pipelines completed the same 120 fixed regression questions over the pinned corpus. These cases informed implementation changes. A blind assessment on fresh questions is pending.
+
+| Measured result | Vector baseline | Candidate |
+|---|---:|---:|
+| Correct calculations | 2/30 | 29/30 |
+| Correct abstentions | 21/25 | 23/25 |
+| Answerable questions answered | 71/95 | 92/95 |
+| Strict reference-page citation matches | 40/71 | 84/92 |
+| Local uncached pipeline p95 | 1.063 s | 2.375 s |
+
+The candidate still produces two false answers in the unanswerable set and abstains on three answerable questions. Source review confirmed eight valid alternate citations rejected by strict page matching. The full report includes raw observations, scoring limits, inference estimates, and failure examples. [Evaluation report](evals/results/2026-11-28/README.md) · [Protocol](evals/README.md)
 
 ## Run the answering API
 

@@ -1,0 +1,7 @@
+{
+  "mode": "fresh-process, cached model files, first policy request",
+  "initialization_seconds": 4.4447,
+  "first_request_seconds": 1.8613,
+  "total_seconds": 6.338,
+  "http_status": 200
+}

@@ -1,5 +1,7 @@
 # Evaluation protocol
 
+The [November 28, 2026 report](results/2026-11-28/README.md) contains the completed 120-case comparison, saved observations, source reviews, and cost-accounting limitations.
+
 Use 120 or more held-out cases over the pinned corpus. The first 120 target 35 regulatory lookups, 30 financial lookups, 30 calculations, and 25 unanswerable questions. Use a separate development set for parser changes, reranker settings, and abstention thresholds. Freeze the held-out set before scoring the release candidate.
 
 Each case records its ID, query, category, and expected answer or abstention reason. For answerable cases, label the supporting document IDs and **one-based PDF page numbers**. Record the entity, reporting period, consolidation scope, currency, scale, and units when they affect the answer. For calculations, record the exact input cells, formula, expected result, and case-specific rounding tolerance. For unanswerable questions, document the missing period, entity, metric, or rule, or the unresolved ambiguity. Check that evidence is absent from the entire pinned corpus.

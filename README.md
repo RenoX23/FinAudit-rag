@@ -4,7 +4,7 @@ FinAudit-RAG is a source-cited question answering project for financial filings 
 
 The first release will cover a fixed collection of public, digital-text Indian company filings and RBI or SEBI documents. A policy lookup should cite the PDF page. A calculation should show its cited inputs, period, units, and Python-computed result. A question without sufficient evidence should yield an explicit abstention.
 
-**Status** — Ingestion, retrieval, the answering API, and a complete 120-case benchmark are implemented. Phase 3 acceptance review and the public web application are pending.
+**Status** — Phases 0–3 are complete, including independent review of the fixed-corpus benchmark. The public web application and deployment are pending.
 
 ## Development setup
 

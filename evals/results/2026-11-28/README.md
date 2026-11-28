@@ -32,7 +32,7 @@ Independent manual review of all 30 baseline financial lookups found 15 correct 
 
 ## Latency and inference estimate
 
-The p95 figures measure local pipeline requests with cached model artifacts and no answer cache. Initialization precedes those timers. A separate fresh-process API check took 4.4447 seconds to initialize and 1.8613 seconds for its first policy request, totalling 6.3380 seconds. The model files were already cached. Public deployment and first-download startup latency are pending.
+The p95 figures measure local pipeline requests with cached model artifacts and no answer cache. Initialization precedes those timers. A separate fresh-process API check took 4.4447 seconds to initialize and 1.8613 seconds for its first policy request. Independently measured total wall time was 6.3380 seconds, including test-client overhead. The model files were already cached. Public deployment and first-download startup latency are pending.
 
 The baseline recorded 154,082 input tokens and 10,957 output tokens. The list-price recorded lower bound is USD 0.01237 per 100 queries.
 
@@ -46,4 +46,4 @@ The estimate uses USD 0.075 per million input tokens and USD 0.30 per million ou
 python -m evals.score evals/results/2026-11-28/baseline.jsonl evals/results/2026-11-28/candidate.jsonl
 ```
 
-Use summary.json for the regenerated counts. Candidate metadata records the exact code and corpus digests and model revisions. Baseline metadata uses the legacy format from acc0192. Source-review files identify the reviewed cases, original source checksums, and observation snapshot hashes. Those snapshots were taken during the run. The final observations preserve those reviewed rows.
+Use summary.json for the regenerated counts. Candidate metadata records the exact code and corpus digests and model revisions. Baseline metadata uses the legacy format from acc0192. Source-review files identify the reviewed cases, original source checksums, and observation snapshot hashes. Those snapshots were taken during the run. The final observations preserve those reviewed rows. Normalize JSONL line endings to LF when verifying snapshot hashes across checkouts.

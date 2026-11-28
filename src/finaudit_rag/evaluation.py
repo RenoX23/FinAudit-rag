@@ -10,6 +10,7 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from finaudit_rag.contracts import CitedLookup
 from finaudit_rag.corpus import Document
 
 Category = Literal["regulatory", "financial_lookup", "calculation", "unanswerable"]
@@ -91,6 +92,7 @@ class Observation(BaseModel):
     seconds: float = Field(ge=0, allow_inf_nan=False)
     input_tokens: int = Field(default=0, ge=0)
     output_tokens: int = Field(default=0, ge=0)
+    lookup: CitedLookup | None = None
 
 
 def load_cases(directory: Path, documents: Mapping[str, Document]) -> list[Case]:
@@ -135,6 +137,20 @@ def is_correct(case: Case, observed: Observation) -> bool:
             and abs(observed.result - case.expected_result) <= case.tolerance
         )
     text = " ".join(observed.text.casefold().split())
+    if case.category == "financial_lookup" and observed.lookup is not None:
+        lookup = observed.lookup
+        if (
+            lookup.period != f"FY{case.fiscal_year}"
+            or lookup.scope != case.scope
+            or lookup.unit != case.unit
+            or not any(
+                Decimal(term.replace(",", "")) == lookup.amount
+                for alternatives in case.required_terms
+                for term in alternatives
+                if re.fullmatch(r"\d[\d,]*(?:\.\d+)?", term)
+            )
+        ):
+            return False
     return all(any(_has_term(text, term) for term in group) for group in case.required_terms)
 
 

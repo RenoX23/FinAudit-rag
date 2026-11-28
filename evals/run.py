@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from time import monotonic, sleep
 from urllib.parse import urlsplit
@@ -18,7 +19,7 @@ from finaudit_rag.contracts import AnswerPlan
 from finaudit_rag.corpus import load_manifest
 from finaudit_rag.evaluation import Case, Observation, PageKey, load_cases
 from finaudit_rag.ingestion import Chunk
-from finaudit_rag.models import CpuModels
+from finaudit_rag.models import EMBEDDING_REVISION, RERANKER_REVISION, CpuModels
 from finaudit_rag.planner import PROMPT_VERSION, ChatPlanner, PlannerUnavailable
 from finaudit_rag.privacy import mask_sensitive_text
 from finaudit_rag.retrieval import RETRIEVAL_VERSION, HybridRetriever
@@ -34,12 +35,15 @@ BASELINE_PROMPT = (
 
 
 class Meter:
-    def __init__(self) -> None:
+    def __init__(self, ledger: Path, case_id: str) -> None:
         self.input_tokens = self.output_tokens = 0
         self.rate_limited = False
         self.retry_seconds: int | None = None
+        self.ledger = ledger
+        self.case_id = case_id
 
     def capture(self, response: httpx.Response) -> None:
+        input_tokens = output_tokens = 0
         if response.status_code == 429:
             self.rate_limited = True
             retry = response.headers.get("retry-after", "")
@@ -49,8 +53,20 @@ class Meter:
             response.read()
             payload = response.json()
             usage = payload.get("usage") or {}
-            self.input_tokens += int(usage.get("prompt_tokens") or 0)
-            self.output_tokens += int(usage.get("completion_tokens") or 0)
+            input_tokens = int(usage.get("prompt_tokens") or 0)
+            output_tokens = int(usage.get("completion_tokens") or 0)
+            self.input_tokens += input_tokens
+            self.output_tokens += output_tokens
+        record = {
+            "event": "response",
+            "case_id": self.case_id,
+            "time_utc": datetime.now(UTC).isoformat(),
+            "status": response.status_code,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+        }
+        with self.ledger.open("a", encoding="utf-8", newline="\n") as destination:
+            destination.write(json.dumps(record) + "\n")
 
 
 def page(chunk: Chunk) -> PageKey:
@@ -157,6 +173,9 @@ def main() -> None:
     models = CpuModels(Path("data/local/models"))
     hybrid = HybridRetriever(store, collection, docs) if args.mode == "candidate" else None
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    code_digest = hashlib.sha256()
+    for source in sorted([*Path("src/finaudit_rag").glob("*.py"), *Path("evals").glob("*.py")]):
+        code_digest.update(source.as_posix().encode() + b"\0" + source.read_bytes())
     identity = {
         "mode": args.mode,
         "model": model,
@@ -165,6 +184,13 @@ def main() -> None:
         "temperature": 0,
         "max_completion_tokens": 900,
         "prompt": PROMPT_VERSION if hybrid is not None else BASELINE_PROMPT,
+        "manifest_sha256": hashlib.sha256(Path("data/corpus.json").read_bytes()).hexdigest(),
+        "code_sha256": code_digest.hexdigest(),
+        "embedding_revision": EMBEDDING_REVISION,
+        "reranker_revision": RERANKER_REVISION if hybrid is not None else None,
+        "retrieved_context": 5,
+        "characters_per_chunk": 2400,
+        "candidate_shortlist": 12 if hybrid is not None else 5,
         "cases_sha256": hashlib.sha256(
             "\n".join(case.model_dump_json() for case in cases).encode()
         ).hexdigest(),
@@ -190,7 +216,8 @@ def main() -> None:
     for case in cases:
         if case.id in done:
             continue
-        meter = Meter()
+        ledger = args.output.with_suffix(".attempts.jsonl")
+        meter = Meter(ledger, case.id)
         started = monotonic()
         with httpx.Client(timeout=15.0, event_hooks={"response": [meter.capture]}) as client:
             try:
@@ -244,6 +271,7 @@ def main() -> None:
                         citations=citation,
                         context=context,
                         seconds=0.0,
+                        lookup=response.lookup,
                     )
             except (httpx.HTTPError, PlannerUnavailable, ValueError, KeyError, TypeError) as error:
                 if meter.rate_limited:
@@ -262,6 +290,8 @@ def main() -> None:
         observation.output_tokens = meter.output_tokens
         with args.output.open("a", encoding="utf-8", newline="\n") as result_file:
             result_file.write(observation.model_dump_json() + "\n")
+        with ledger.open("a", encoding="utf-8", newline="\n") as destination:
+            destination.write(json.dumps({"event": "complete", "case_id": case.id}) + "\n")
         done.add(case.id)
         print(f"{args.mode} {len(done)}/{len(cases)} {case.id}: {observation.status}", flush=True)
         sleep(args.delay)

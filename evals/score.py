@@ -26,6 +26,22 @@ def main() -> None:
             if line.strip()
         ]
         results[name] = summarize(cases, observations)
+        ledger = source.with_suffix(".attempts.jsonl")
+        attempts = (
+            [
+                json.loads(line)
+                for line in ledger.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            if ledger.exists()
+            else []
+        )
+        completed = {item["case_id"] for item in attempts if item["event"] == "complete"}
+        complete = completed == {item.id for item in observations}
+        results[name]["usage_accounting_complete"] = complete
+        if complete:
+            results[name]["input_tokens"] = sum(item.get("input_tokens", 0) for item in attempts)
+            results[name]["output_tokens"] = sum(item.get("output_tokens", 0) for item in attempts)
     print(json.dumps(results, indent=2))
 
 

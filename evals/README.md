@@ -54,6 +54,12 @@ python -m evals.score data/local/benchmark/baseline.jsonl data/local/benchmark/c
 
 Use `--pilot` with separate filenames to exercise the runner on two cases per category. A run saves completed observations and its configuration so the same command can resume after a provider rate limit. The runner records usage reported by successful provider responses and measures per-question time before the pause between requests.
 
+New runs also record source-code and manifest digests, embedding and reranker revisions, and context limits. Resuming requires the same configuration and code bytes. Each HTTP response appends a usage record to the adjacent `.attempts.jsonl` file before response validation. This preserves reported token usage when a successful response is followed by a rate-limited retry. The scorer reports `usage_accounting_complete` and uses the attempt ledger for token totals when every saved case has a completion marker.
+
+The original baseline run began at acc0192 with the earlier metadata format and is resumed with that revision's baseline runner. Its records are retained, and its usage accounting is incomplete because the earlier runner did not preserve successful attempts followed by quota failures. Treat its recorded token totals as a lower bound. Candidate runs with the revised accounting use separate output files.
+
+Structured lookup observations preserve the amount, fiscal year, reporting scope, unit, and source citation. Their content score verifies the typed amount, year, scope, and unit against the reference labels. Free-text lookup responses use the documented term proxy and require manual review for year and scope before publishing a faithfulness claim.
+
 The numerical preflight identified reporting metadata missing from the text extraction. The application recovers verified annual headers for four TCS statement pages and the standalone heading for Infosys page 264 from the exact pinned source snapshots. The preflight cases informed that change. Report them as a fixed regression benchmark and reserve fresh cases for a blind assessment.
 
 ### Pilot findings

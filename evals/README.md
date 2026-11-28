@@ -81,3 +81,11 @@ The two financial lookup responses cited pages 31 and 74. Their excerpts present
 The candidate with hybrid-annual-tables-v2 handles recognized single-amount questions locally. In a warm, uncached API check against the existing index, all 30 financial lookups matched the reference amount, year, scope, and unit. Request latency at p95 was 4.68 ms on the local test host, measured through FastAPI's in-process test client. The provider endpoint was disabled for this check.
 
 Twenty-six citations matched the original page labels. For the other four, the candidate used the consolidated statement on physical PDF page 277 of the Infosys annual report. Direct source review confirmed that page 277 and the labeled page 347 report the same FY2025 and FY2024 revenue and profit-before-tax values under the same scope and units. The automatic scorer retains the frozen reference pages. The runner records the verified cell's page as context for a structured lookup.
+
+### Direct calculation selection
+
+The evidence-selection-v5 model-selection run completed all 30 calculations with 24 correct results and six abstentions. The complete experiment was stopped after 39 saved cases when direct cell selection was approved. Retain those observations as a partial diagnostic run.
+
+The candidate with hybrid-annual-tables-v3 recognizes bounded annual growth, operating margin, and percentage-point margin-change questions. It selects cells by issuer, scope, metric, period, and optional filing year or PDF page. Complete operand sets must share one source page. Conflicting original amounts across eligible source statements cause an abstention. The existing arithmetic and citation validators check the selected operands.
+
+An API regression with the model endpoint disabled verified 29 of 30 calculations and all 30 financial lookups. The unsupported calculation is calc-26, where the extracted TCS FY2024 consolidated statement lacks the profit-before-tax row. The full revised benchmark uses a separate output file. Provider pacing applies after HTTP responses, so local calculations and lookups consume no provider quota or inter-request delay.

@@ -38,11 +38,13 @@ class Meter:
     def __init__(self, ledger: Path, case_id: str) -> None:
         self.input_tokens = self.output_tokens = 0
         self.rate_limited = False
+        self.requests = 0
         self.retry_seconds: int | None = None
         self.ledger = ledger
         self.case_id = case_id
 
     def capture(self, response: httpx.Response) -> None:
+        self.requests += 1
         input_tokens = output_tokens = 0
         if response.status_code == 429:
             self.rate_limited = True
@@ -242,7 +244,11 @@ def main() -> None:
                         return hits
 
                     response = AnswerService(
-                        docs, retrieve, recording, lookup=searcher.lookup
+                        docs,
+                        retrieve,
+                        recording,
+                        lookup=searcher.lookup,
+                        calculation=searcher.calculation,
                     ).answer(query)
                     citation = [
                         PageKey(document_id=item.citation.document_id, page=item.citation.page)
@@ -254,6 +260,8 @@ def main() -> None:
                     ]
                     text = " ".join(item.quote for item in response.excerpts)
                     context = recording.pages
+                    if response.calculation:
+                        context = citation
                     if lookup := response.lookup:
                         citation = [
                             PageKey(
@@ -294,7 +302,8 @@ def main() -> None:
             destination.write(json.dumps({"event": "complete", "case_id": case.id}) + "\n")
         done.add(case.id)
         print(f"{args.mode} {len(done)}/{len(cases)} {case.id}: {observation.status}", flush=True)
-        sleep(args.delay)
+        if meter.requests:
+            sleep(args.delay)
 
 
 if __name__ == "__main__":

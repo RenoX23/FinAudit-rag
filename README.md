@@ -63,6 +63,8 @@ python -m uvicorn finaudit_rag.api:create_app --factory --host 127.0.0.1 --port 
 
 For a single reported amount, ask a direct question such as “What was Infosys's standalone FY2024 revenue from operations?” The response includes the amount, fiscal year, reporting scope, and citation. Recognized financial lookups are verified locally against annual statements and abstain when the cells conflict or the amount cannot be verified.
 
+Supported annual calculations also select verified cells locally. Include one issuer, one reporting scope, and explicit fiscal years. For example, ask “Calculate Infosys's standalone year-over-year growth in revenue from operations from FY2024 to FY2025, expressed as a percentage”, “What is Infosys's consolidated operating margin for FY2025?”, or “How many percentage points did the Infosys consolidated operating margin change between FY2024 and FY2025?” Conflicting amounts, incomplete source cells, and unsupported calculation wording produce an abstention.
+
 PAN, Aadhaar, email addresses, and labeled account numbers are masked before the model receives queries or excerpts. Set `FINAUDIT_REDIS_URL` to enable the optional cache. It keys entries to the exact question, indexed corpus, and model configuration. Queries with detected identifiers bypass caching.
 
 ## Build and release plan

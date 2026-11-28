@@ -19,7 +19,9 @@ from finaudit_rag.answer_service import PDF_PAGE, SCOPE, _operation, _years
 from finaudit_rag.arithmetic import (
     FY,
     INR_CRORE,
+    PROFIT,
     QUARTER_ENDED,
+    REVENUE,
     YEAR_ENDED,
     CellReference,
     Operand,
@@ -27,17 +29,18 @@ from finaudit_rag.arithmetic import (
     _metric,
     _read_operand,
 )
+from finaudit_rag.contracts import AnswerPlan, OperandSelection
 from finaudit_rag.corpus import Document, load_manifest
 from finaudit_rag.financial_headers import verified_financial_header
 from finaudit_rag.ingestion import Chunk, chunk_from_record
-from finaudit_rag.lookup import FILING_YEAR, INCOME_STATEMENT, LookupRequest
+from finaudit_rag.lookup import FILING_YEAR, INCOME_STATEMENT, LookupRequest, parse_calculation
 from finaudit_rag.models import EMBEDDING_REVISION, CpuModels
 from finaudit_rag.vector_store import PgChunkStore
 
 WORDS = re.compile(r"\w+(?:[./-]\w+)*")
 CIRCULAR_ID = re.compile(r"(?<!\w)[a-z]{2,}(?:/[a-z\d.-]+)+/\d+(?!\w)", re.IGNORECASE)
 MAX_CANDIDATES = 20
-RETRIEVAL_VERSION = "hybrid-annual-tables-v2"
+RETRIEVAL_VERSION = "hybrid-annual-tables-v3"
 
 
 class _AnnualTable(NamedTuple):
@@ -45,6 +48,15 @@ class _AnnualTable(NamedTuple):
     years: set[str]
     scopes: set[str]
     heading: str
+
+
+def _canonical_metric(label: str) -> str:
+    metric = _metric(label)
+    if metric in REVENUE:
+        return "revenue from operations"
+    if metric in PROFIT:
+        return "operating profit"
+    return metric
 
 
 class ChunkStore(Protocol):
@@ -123,9 +135,8 @@ class HybridRetriever:
             and (not scopes or (len(scopes) == 1 and scopes == metadata.scopes))
         }
 
-    def lookup(self, request: LookupRequest) -> tuple[Chunk, Operand] | None:
-        """Select a unique amount from the requested annual statement."""
-        matches: dict[Decimal, tuple[Chunk, Operand]] = {}
+    def _matching_tables(self, request: LookupRequest) -> list[_AnnualTable]:
+        matches = []
         for metadata in self._annual_tables.values():
             chunk = metadata.chunk
             document = self._documents[chunk.document_id]
@@ -141,6 +152,14 @@ class HybridRetriever:
                 )
             ):
                 continue
+            matches.append(metadata)
+        return matches
+
+    def lookup(self, request: LookupRequest) -> tuple[Chunk, Operand] | None:
+        """Select a unique amount from the requested annual statement."""
+        matches: dict[Decimal, tuple[Chunk, Operand]] = {}
+        for metadata in self._matching_tables(request):
+            chunk = metadata.chunk
             assert chunk.table is not None
             column = chunk.table.columns.index(request.year)
             for row, values in enumerate(chunk.table.rows):
@@ -152,6 +171,49 @@ class HybridRetriever:
                     return None
                 matches.setdefault(operand.amount, (chunk, operand))
         return next(iter(matches.values())) if len(matches) == 1 else None
+
+    def calculation(self, question: str) -> tuple[AnswerPlan, dict[str, Chunk]] | None:
+        """Select complete, consistent operands on one annual statement page."""
+        request = parse_calculation(question)
+        if request is None:
+            return None
+        expected = {
+            (_canonical_metric(metric), year)
+            for metric in request.metrics
+            for year in request.years
+        }
+        pages: dict[tuple[str, int], dict[tuple[str, str], OperandSelection]] = defaultdict(dict)
+        amounts: dict[tuple[str, str], set[tuple[Decimal, str]]] = defaultdict(set)
+        evidence: dict[str, Chunk] = {}
+        for metadata in self._matching_tables(request.source):
+            chunk = metadata.chunk
+            assert chunk.table is not None
+            evidence[chunk.id] = chunk
+            for row_index, row in enumerate(chunk.table.rows):
+                if not row or not row[0]:
+                    continue
+                for column, year in enumerate(chunk.table.columns):
+                    key = (_canonical_metric(row[0]), year)
+                    if key not in expected:
+                        continue
+                    try:
+                        operand = _read_operand(
+                            CellReference(chunk.id, row_index, column), {chunk.id: chunk}
+                        )
+                    except UnverifiedCalculation:
+                        return None
+                    amounts[key].add((operand.amount, operand.unit))
+                    pages[(chunk.document_id, chunk.page)][key] = OperandSelection(
+                        chunk_id=chunk.id, row=row_index, column=column
+                    )
+        if set(amounts) != expected or any(len(values) != 1 for values in amounts.values()):
+            return None
+        for cells in pages.values():
+            if set(cells) == expected:
+                return AnswerPlan(
+                    decision="calculation", operands=[cells[key] for key in sorted(cells)]
+                ), evidence
+        return None
 
     def search(
         self,

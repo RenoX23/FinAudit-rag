@@ -26,7 +26,7 @@ from finaudit_rag.contracts import (
 from finaudit_rag.corpus import Document
 from finaudit_rag.financial_headers import verified_financial_header
 from finaudit_rag.ingestion import Chunk
-from finaudit_rag.lookup import LookupRequest, parse_lookup
+from finaudit_rag.lookup import LookupRequest, parse_calculation, parse_lookup
 from finaudit_rag.privacy import mask_sensitive_text
 
 YEAR_REFERENCE = re.compile(r"\bFY\s*(?:20)?(\d{2})\b", re.IGNORECASE)
@@ -112,12 +112,14 @@ class AnswerService:
         planner: Planner,
         cache: AnswerCache | None = None,
         lookup: Callable[[LookupRequest], tuple[Chunk, Operand] | None] | None = None,
+        calculation: Callable[[str], tuple[AnswerPlan, dict[str, Chunk]] | None] | None = None,
     ) -> None:
         self._documents = documents
         self._retrieve = retrieve
         self._planner = planner
         self._cache = cache
         self._lookup = lookup
+        self._select_calculation = calculation
 
     def answer(self, question: str) -> QueryResponse:
         """Return verifiable evidence or an explicit abstention."""
@@ -168,6 +170,18 @@ class AnswerService:
         scopes = {scope.casefold() for scope in SCOPE.findall(question)}
         if operation is not None and (len(issuers) != 1 or len(scopes) != 1):
             return abstain("Calculations require one named issuer and one reporting scope.")
+        if operation is not None and self._select_calculation is not None:
+            selected = self._select_calculation(question)
+            if selected is None:
+                return abstain("The source statements did not verify complete, unique operands.")
+            plan, evidence = selected
+            try:
+                calculation = self._calculation(question, operation, plan, evidence)
+            except UnverifiedCalculation as error:
+                return abstain(str(error))
+            return QueryResponse(
+                status="answered", redacted_question=question, calculation=calculation
+            )
         requested_years = _years(question, include_bare=operation is not None)
         pages = {int(page) for page in PDF_PAGE.findall(question)}
         expected_kind = "table" if operation is not None else "text"
@@ -264,7 +278,9 @@ class AnswerService:
             matches_revenue = label == "revenue from operations" and "revenue" in query
             if label not in query and not matches_revenue:
                 raise UnverifiedCalculation("the source row does not match the requested metric")
-        requested_years = {f"FY{year}" for year in _years(question, include_bare=True)}
+        parsed = parse_calculation(question)
+        years = parsed.years if parsed else _years(question, include_bare=True)
+        requested_years = {f"FY{year}" for year in years}
         if requested_years and (
             not requested_years.issubset({operand.period for operand in result.operands})
             or result.operands[0].period != max(requested_years)

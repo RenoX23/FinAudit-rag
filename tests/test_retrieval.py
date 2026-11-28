@@ -144,3 +144,75 @@ def test_financial_lookup_verifies_one_annual_amount_without_model_calls(
             assert body["lookup"]["citation"]["page"] == 264
         wrong_year = client.post("/query", json={"question": question.replace("FY2024", "FY2020")})
         assert wrong_year.json()["status"] == "abstained"
+
+
+@pytest.mark.parametrize("conflict", [False, True])
+def test_direct_calculations_validate_cells_and_reject_ambiguous_requests(conflict: bool) -> None:
+    documents = {document.id: document for document in load_manifest(Path("data/corpus.json"))}
+    source_id = "infosys-fy25-annual"
+    table = Table(
+        ("Standalone Statement of Profit and Loss", "(In INR crore)", "Year ended March 31"),
+        ("Line item", "2025", "2024"),
+        (
+            ("Revenue from operations", "136592", "128933"),
+            ("Operating profit", "30880", "28813"),
+        ),
+    )
+    chunk = Chunk(f"{source_id}:264:table:0", source_id, 264, "table", "Annual results", table)
+    chunks = [chunk]
+    if conflict:
+        other = replace(table, rows=(("Revenue from operations", "136000", "128933"),))
+        chunks.append(replace(chunk, id=f"{source_id}:264:table:1", table=other))
+    search = HybridRetriever(SearchStore(chunks), "test", documents)
+
+    class UnexpectedPlanner:
+        def plan(
+            self, question: str, operation: Operation | None, evidence: Sequence[dict[str, str]]
+        ) -> AnswerPlan:
+            pytest.fail("A direct calculation called the model")
+
+    def unexpected_retrieval(_question: str) -> list[Chunk]:
+        pytest.fail("A direct calculation called external retrieval")
+
+    service = AnswerService(
+        documents, unexpected_retrieval, UnexpectedPlanner(), calculation=search.calculation
+    )
+    question = (
+        "Calculate Infosys's standalone year-over-year growth in revenue from operations "
+        "from FY2024 to FY2025, expressed as a percentage"
+    )
+    with TestClient(create_app(service)) as client:
+        response = client.post("/query", json={"question": question})
+        assert response.status_code == 200
+        if conflict:
+            assert response.json()["status"] == "abstained"
+        else:
+            assert response.json()["calculation"]["result"] == "5.94"
+            assert {
+                item["citation"]["page"] for item in response.json()["calculation"]["operands"]
+            } == {264}
+            filing = client.post("/query", json={"question": f"{question} in the FY2025 filing"})
+            assert filing.json()["calculation"]["result"] == "5.94"
+            margin = client.post(
+                "/query",
+                json={
+                    "question": "What is Infosys's standalone operating margin "
+                    "for FY2024 in the FY2025 filing?"
+                },
+            )
+            assert margin.json()["calculation"]["result"] == "22.35"
+        rejected = [
+            question.replace("revenue from operations", "revenue and gross profit"),
+            question.replace("Infosys", "Infosys and Wipro"),
+            question.replace("FY2024 to FY2025", "FY2023 to FY2025"),
+            question.replace("from FY2024 to FY2025", "for FY2025"),
+            f"{question} in the FY2024 filing",
+            f"{question} on PDF page 10",
+            f"{question} on PDF page 264 and PDF page 277",
+            "Calculate Infosys's standalone operating margin percentage change "
+            "from FY2024 to FY2025",
+        ]
+        for query in rejected:
+            result = client.post("/query", json={"question": query})
+            assert result.status_code == 200
+            assert result.json()["status"] == "abstained", query

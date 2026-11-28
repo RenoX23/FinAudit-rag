@@ -4,7 +4,7 @@ FinAudit-RAG is a source-cited question answering project for financial filings 
 
 The first release will cover a fixed collection of public, digital-text Indian company filings and RBI or SEBI documents. A policy lookup should cite the PDF page. A calculation should show its cited inputs, period, units, and Python-computed result. A question without sufficient evidence should yield an explicit abstention.
 
-**Status** — PDF ingestion, retrieval, and answering API. Benchmark results and the public demo are pending.
+**Status** — Phases 0–3 are complete, including independent review of the fixed-corpus benchmark. The public web application and deployment are pending.
 
 ## Development setup
 
@@ -49,7 +49,17 @@ python -m finaudit_rag.retrieval search COLLECTION_ID "Find SEBI/HO/MIRSD/MIRSD-
 
 Use the ID printed by the corresponding index command in place of `COLLECTION_ID`. The baseline returns cosine matches. Table-aware retrieval combines BM25 and cosine ranks, then applies a CPU reranker. Model snapshots download on first use to the ignored model cache. Queries and evidence are processed locally by both retrieval models. The search command prints evidence and PDF page numbers.
 
-The benchmark will run fixed-size chunking and vector-only retrieval against the upgraded pipeline on the same held-out questions. The [evaluation protocol](evals/README.md) defines the labels, measurements, and release criteria.
+Both pipelines completed the same 120 fixed regression questions over the pinned corpus. These cases informed implementation changes. A blind assessment on fresh questions is pending.
+
+| Measured result | Vector baseline | Candidate |
+|---|---:|---:|
+| Correct calculations | 2/30 | 29/30 |
+| Correct abstentions | 21/25 | 23/25 |
+| Answerable questions answered | 71/95 | 92/95 |
+| Strict reference-page citation matches | 40/71 | 84/92 |
+| Local uncached pipeline p95 | 1.063 s | 2.375 s |
+
+The candidate still produces two false answers in the unanswerable set and abstains on three answerable questions. Source review confirmed eight valid alternate citations rejected by strict page matching. The full report includes raw observations, scoring limits, inference estimates, and failure examples. [Evaluation report](evals/results/2026-11-28/README.md) · [Protocol](evals/README.md)
 
 ## Run the answering API
 
@@ -59,7 +69,11 @@ Start the database and index the table-aware export. Set `FINAUDIT_DATABASE_URL`
 python -m uvicorn finaudit_rag.api:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-`GET /healthz` checks that the process is responding. Send a JSON object with a `question` field to `POST /query`. An answer contains page-cited source excerpts or a Python calculation and its cited operands. An abstention includes the reason. Use fiscal years such as FY2025 in calculation questions. Figures must use INR crore and consistent source headings. Provider and database failures return structured 503 errors.
+`GET /healthz` checks that the process is responding. Send a JSON object with a `question` field to `POST /query`. An answer contains page-cited source excerpts, a cited calculation with its operands, or a cited `lookup` for a single reported amount. An abstention includes the reason. Use fiscal years such as FY2025 in calculation questions. Figures must use INR crore and consistent source headings. Provider and database failures return structured 503 errors.
+
+For a single reported amount, ask a direct question such as “What was Infosys's standalone FY2024 revenue from operations?” The response includes the amount, fiscal year, reporting scope, and citation. Recognized financial lookups are verified locally against annual statements and abstain when the cells conflict or the amount cannot be verified.
+
+Supported annual calculations also select verified cells locally. Include one issuer, one reporting scope, and explicit fiscal years. For example, ask “Calculate Infosys's standalone year-over-year growth in revenue from operations from FY2024 to FY2025, expressed as a percentage”, “What is Infosys's consolidated operating margin for FY2025?”, or “How many percentage points did the Infosys consolidated operating margin change between FY2024 and FY2025?” Conflicting amounts, incomplete source cells, and unsupported calculation wording produce an abstention.
 
 PAN, Aadhaar, email addresses, and labeled account numbers are masked before the model receives queries or excerpts. Set `FINAUDIT_REDIS_URL` to enable the optional cache. It keys entries to the exact question, indexed corpus, and model configuration. Queries with detected identifiers bypass caching.
 

@@ -1,5 +1,5 @@
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from secrets import token_urlsafe
 
 import httpx
@@ -8,7 +8,8 @@ from fastapi.testclient import TestClient
 
 from finaudit_rag.answer_service import AnswerService
 from finaudit_rag.api import create_app
-from finaudit_rag.contracts import QueryResponse
+from finaudit_rag.arithmetic import Operation
+from finaudit_rag.contracts import AnswerPlan, QueryResponse
 from finaudit_rag.corpus import Document
 from finaudit_rag.ingestion import Chunk, Table
 from finaudit_rag.planner import ChatPlanner
@@ -112,7 +113,8 @@ def test_routes_numeric_question_and_returns_python_result_with_input_citations(
 
     with TestClient(create_app(service(TABLE, handler))) as client:
         reply = client.post(
-            "/query", json={"question": "What was the standalone operating margin change in FY25?"}
+            "/query",
+            json={"question": "What was Example's standalone operating margin change in FY25?"},
         )
     assert reply.status_code == 200
     assert attempts == (2 if incomplete_first else 1)
@@ -125,8 +127,8 @@ def test_routes_numeric_question_and_returns_python_result_with_input_citations(
 @pytest.mark.parametrize(
     "question",
     [
-        "What was the operating margin in FY2029?",
-        "What was the operating margin in 2029?",
+        "What was Example's standalone operating margin in FY2029?",
+        "What was Example's standalone operating margin in 2029?",
         "What was the Q4 FY2025 operating margin?",
         "What was the March 2025 operating margin?",
         "What was the operating margin on 2025-12-31?",
@@ -141,6 +143,33 @@ def test_abstains_on_missing_or_subannual_period_without_calling_model(question:
         reply = client.post("/query", json={"question": question})
     assert reply.status_code == 200
     assert reply.json()["status"] == "abstained"
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "For FY2025, how much did operating margin change?",
+        "How much did Example operating margin change from FY2024 to FY2025?",
+        "What was the standalone operating margin change in FY2025?",
+        "What was Example standalone and consolidated operating margin change in FY2025?",
+    ],
+)
+def test_ambiguous_calculations_abstain_before_retrieval(question: str) -> None:
+    def unexpected_retrieval(_question: str) -> list[Chunk]:
+        pytest.fail("Ambiguous calculations must abstain before retrieval")
+
+    class UnexpectedPlanner:
+        def plan(
+            self, question: str, operation: Operation | None, evidence: Sequence[dict[str, str]]
+        ) -> AnswerPlan:
+            pytest.fail("Ambiguous calculations must abstain before a model call")
+
+    instance = AnswerService({DOCUMENT.id: DOCUMENT}, unexpected_retrieval, UnexpectedPlanner())
+    with TestClient(create_app(instance)) as client:
+        reply = client.post("/query", json={"question": question})
+    assert reply.status_code == 200
+    assert reply.json()["status"] == "abstained"
+    assert "issuer" in reply.json()["reason"]
 
 
 def test_retries_malformed_json_once_and_rejects_invalid_line_reference() -> None:

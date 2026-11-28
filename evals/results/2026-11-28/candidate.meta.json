@@ -1,0 +1,18 @@
+{
+  "mode": "candidate",
+  "model": "openai/gpt-oss-20b",
+  "provider": "api.groq.com",
+  "collection": "table-aware:bb7ada6bd64e7409141c56b02c05e0f81a8c2273ce6362c78f6744cc6ab23556:aa8f8b060edb00e03bfdd08813a2949946c8ba55",
+  "temperature": 0,
+  "max_completion_tokens": 900,
+  "prompt": "evidence-selection-v5",
+  "manifest_sha256": "9302bdf43ef6266256315689301687e5f46f159521ae91fa958a7b4f1ada303c",
+  "code_sha256": "f5de2c335e115f39331478fefbeb0cc4b8f4bd20433a31186dd53b3b3ba81ab8",
+  "embedding_revision": "aa8f8b060edb00e03bfdd08813a2949946c8ba55",
+  "reranker_revision": "a09144355adeed5f58c8ed011d209bf8ee5a1fec",
+  "retrieved_context": 5,
+  "characters_per_chunk": 2400,
+  "candidate_shortlist": 12,
+  "cases_sha256": "616baa3685b4384bf637d00f03912e1e1af48944f77da3cbf0efe1f0024cb5b9",
+  "retrieval": "hybrid-annual-tables-v3"
+}

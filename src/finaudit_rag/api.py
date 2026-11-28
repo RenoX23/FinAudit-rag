@@ -21,7 +21,7 @@ from finaudit_rag.corpus import load_manifest
 from finaudit_rag.ingestion import Chunk
 from finaudit_rag.models import RERANKER_REVISION, CpuModels
 from finaudit_rag.planner import PROMPT_VERSION, ChatPlanner, PlannerUnavailable
-from finaudit_rag.retrieval import HybridRetriever
+from finaudit_rag.retrieval import RETRIEVAL_VERSION, HybridRetriever
 from finaudit_rag.vector_store import PgChunkStore
 
 REQUIRED = (
@@ -48,7 +48,7 @@ def _runtime() -> tuple[AnswerService, Callable[[], None]]:
     if not collection.startswith("table-aware:"):
         raise ValueError("FINAUDIT_COLLECTION_ID must refer to table-aware evidence")
     store = PgChunkStore(os.environ["FINAUDIT_DATABASE_URL"])
-    retriever = HybridRetriever(store, collection)
+    retriever = HybridRetriever(store, collection, documents)
     models = CpuModels(Path(os.environ.get("FINAUDIT_MODEL_CACHE", "data/local/models")))
     planner = ChatPlanner(
         os.environ["FINAUDIT_LLM_ENDPOINT"],
@@ -65,6 +65,7 @@ def _runtime() -> tuple[AnswerService, Callable[[], None]]:
                 collection,
                 manifest_digest,
                 RERANKER_REVISION,
+                RETRIEVAL_VERSION,
                 PROMPT_VERSION,
                 os.environ["FINAUDIT_LLM_ENDPOINT"],
                 os.environ["FINAUDIT_LLM_MODEL"],
@@ -80,7 +81,14 @@ def _runtime() -> tuple[AnswerService, Callable[[], None]]:
         if connection is not None:
             connection.close()
 
-    return AnswerService(documents, retrieve, planner, cache), close
+    return AnswerService(
+        documents,
+        retrieve,
+        planner,
+        cache,
+        lookup=retriever.lookup,
+        calculation=retriever.calculation,
+    ), close
 
 
 def create_app(service: AnswerService | None = None) -> FastAPI:

@@ -1,0 +1,155 @@
+{
+  "review_time_utc": "2026-11-28T15:31:57.556205+00:00",
+  "revision": "44d8ab92a403b10ac357206d02ffe5f602922b07",
+  "candidate_file": "data\\local\\benchmark\\candidate-direct.jsonl",
+  "candidate_snapshot_sha256": "c293b4a41a32edb1f29f713f6616e9c7e7bc01bfeb83aedb6ae26717aae27c04",
+  "candidate_snapshot_cases": 70,
+  "pdf_sha256": "6224d11244d3f44f7e95901428a8ff23164f383cd1960e02a47483c48612a3c5",
+  "source_rows": {
+    "277": {
+      "Revenue from operations": {
+        "2025": "162990",
+        "2024": "153670",
+        "source_line": "Revenue from operations 2.18 162,990 153,670"
+      },
+      "Profit before tax": {
+        "2025": "37608",
+        "2024": "35988",
+        "source_line": "Profit before tax 37,608 35,988"
+      }
+    },
+    "347": {
+      "Revenue from operations": {
+        "2025": "162990",
+        "2024": "153670",
+        "source_line": "Revenue from operations 2.18 1,62,990 1,53,670"
+      },
+      "Profit before tax": {
+        "2025": "37608",
+        "2024": "35988",
+        "source_line": "Profit before tax 37,608 35,988"
+      }
+    }
+  },
+  "adjudications": [
+    {
+      "id": "calc-08",
+      "verdict": "valid_alternate_source",
+      "document_id": "infosys-fy25-annual",
+      "cited_physical_page": 277,
+      "reference_physical_pages": [
+        347
+      ],
+      "scope": "consolidated",
+      "metric": "Revenue from operations",
+      "unit": "INR crore",
+      "fiscal_years_and_amounts": {
+        "2025": "162990",
+        "2024": "153670"
+      },
+      "result": "6.06",
+      "reason": "Original page 277 and reference page 347 report identical metric amounts, fiscal years, scope, and unit."
+    },
+    {
+      "id": "calc-11",
+      "verdict": "valid_alternate_source",
+      "document_id": "infosys-fy25-annual",
+      "cited_physical_page": 277,
+      "reference_physical_pages": [
+        347
+      ],
+      "scope": "consolidated",
+      "metric": "Profit before tax",
+      "unit": "INR crore",
+      "fiscal_years_and_amounts": {
+        "2025": "37608",
+        "2024": "35988"
+      },
+      "result": "4.50",
+      "reason": "Original page 277 and reference page 347 report identical metric amounts, fiscal years, scope, and unit."
+    },
+    {
+      "id": "fin-11",
+      "verdict": "valid_alternate_source",
+      "document_id": "infosys-fy25-annual",
+      "cited_physical_page": 277,
+      "reference_physical_pages": [
+        347
+      ],
+      "scope": "consolidated",
+      "metric": "Revenue from operations",
+      "unit": "INR crore",
+      "fiscal_years_and_amounts": {
+        "2025": "162990",
+        "2024": "153670"
+      },
+      "result": "162990",
+      "reason": "Original page 277 and reference page 347 report identical metric amounts, fiscal years, scope, and unit."
+    },
+    {
+      "id": "fin-12",
+      "verdict": "valid_alternate_source",
+      "document_id": "infosys-fy25-annual",
+      "cited_physical_page": 277,
+      "reference_physical_pages": [
+        347
+      ],
+      "scope": "consolidated",
+      "metric": "Revenue from operations",
+      "unit": "INR crore",
+      "fiscal_years_and_amounts": {
+        "2025": "162990",
+        "2024": "153670"
+      },
+      "result": "153670",
+      "reason": "Original page 277 and reference page 347 report identical metric amounts, fiscal years, scope, and unit."
+    },
+    {
+      "id": "fin-17",
+      "verdict": "valid_alternate_source",
+      "document_id": "infosys-fy25-annual",
+      "cited_physical_page": 277,
+      "reference_physical_pages": [
+        347
+      ],
+      "scope": "consolidated",
+      "metric": "Profit before tax",
+      "unit": "INR crore",
+      "fiscal_years_and_amounts": {
+        "2025": "37608",
+        "2024": "35988"
+      },
+      "result": "37608",
+      "reason": "Original page 277 and reference page 347 report identical metric amounts, fiscal years, scope, and unit."
+    },
+    {
+      "id": "fin-18",
+      "verdict": "valid_alternate_source",
+      "document_id": "infosys-fy25-annual",
+      "cited_physical_page": 277,
+      "reference_physical_pages": [
+        347
+      ],
+      "scope": "consolidated",
+      "metric": "Profit before tax",
+      "unit": "INR crore",
+      "fiscal_years_and_amounts": {
+        "2025": "37608",
+        "2024": "35988"
+      },
+      "result": "35988",
+      "reason": "Original page 277 and reference page 347 report identical metric amounts, fiscal years, scope, and unit."
+    }
+  ],
+  "latency_evidence": {
+    "numeric_cases": 60,
+    "correct_calculations": "29/30",
+    "correct_lookups": "30/30",
+    "combined_numeric_p95_ms": 4.1,
+    "method": "Warm uncached FastAPI in-process TestClient against existing local database, archived exact revision, provider endpoint disabled.",
+    "limit": "Local regression measurement. Deployment, cold-start, remote network latency, and blind generalization are unverified."
+  },
+  "frozen_references_changed": false,
+  "original_observations_changed": false,
+  "phase_gate": "BLOCKED pending complete run and acceptance review"
+}

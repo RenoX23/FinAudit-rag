@@ -4,17 +4,29 @@ import re
 from collections.abc import Callable, Mapping, Sequence
 from typing import Protocol
 
-from finaudit_rag.arithmetic import CellReference, Operation, UnverifiedCalculation, calculate
+from finaudit_rag.arithmetic import (
+    FY,
+    MONEY_METRICS,
+    CellReference,
+    Operand,
+    Operation,
+    UnverifiedCalculation,
+    _metric,
+    calculate,
+)
 from finaudit_rag.contracts import (
     AnswerPlan,
     CalculationResult,
     Citation,
     CitedExcerpt,
+    CitedLookup,
     CitedOperand,
     QueryResponse,
 )
 from finaudit_rag.corpus import Document
+from finaudit_rag.financial_headers import verified_financial_header
 from finaudit_rag.ingestion import Chunk
+from finaudit_rag.lookup import LookupRequest, parse_calculation, parse_lookup
 from finaudit_rag.privacy import mask_sensitive_text
 
 YEAR_REFERENCE = re.compile(r"\bFY\s*(?:20)?(\d{2})\b", re.IGNORECASE)
@@ -75,10 +87,17 @@ def _source_text(chunk: Chunk) -> str:
     if chunk.table is None:
         source = mask_sensitive_text(chunk.text).text
         return "\n".join(f"line {index}: {line}" for index, line in enumerate(source.splitlines()))
-    headers = " | ".join(f"{index}={label}" for index, label in enumerate(chunk.table.columns))
+    annual = [
+        (index, label)
+        for index, label in enumerate(chunk.table.columns)
+        if index and FY.fullmatch(label)
+    ]
+    headers = " | ".join(f"{index}={label}" for index, label in annual)
     rows = [
-        f"row {index}: " + " | ".join(cell or "" for cell in row)
+        f"row {index}: {row[0]} | "
+        + " | ".join(f"{column}={row[column] or ''}" for column, _ in annual if column < len(row))
         for index, row in enumerate(chunk.table.rows)
+        if row and row[0] and _metric(row[0]) in MONEY_METRICS
     ]
     return "\n".join([*chunk.table.context, f"columns: {headers}", *rows])
 
@@ -92,11 +111,15 @@ class AnswerService:
         retrieve: Callable[[str], Sequence[Chunk]],
         planner: Planner,
         cache: AnswerCache | None = None,
+        lookup: Callable[[LookupRequest], tuple[Chunk, Operand] | None] | None = None,
+        calculation: Callable[[str], tuple[AnswerPlan, dict[str, Chunk]] | None] | None = None,
     ) -> None:
         self._documents = documents
         self._retrieve = retrieve
         self._planner = planner
         self._cache = cache
+        self._lookup = lookup
+        self._select_calculation = calculation
 
     def answer(self, question: str) -> QueryResponse:
         """Return verifiable evidence or an explicit abstention."""
@@ -122,11 +145,43 @@ class AnswerService:
             return abstain("Calculations require fiscal-year labels without a specific date.")
         if operation is None and UNSUPPORTED_INSTRUCTION.search(question.casefold()):
             return abstain("The requested calculation is outside the supported operations.")
+        if self._lookup is not None and (lookup := parse_lookup(question)) is not None:
+            match = self._lookup(lookup)
+            if match is None:
+                return abstain("The source statements did not verify a unique requested amount.")
+            chunk, operand = match
+            return QueryResponse(
+                status="answered",
+                redacted_question=question,
+                lookup=CitedLookup(
+                    metric=operand.row_label,
+                    period=operand.period,
+                    amount=operand.amount,
+                    unit=operand.unit,
+                    citation=self._citation(chunk),
+                    scope=lookup.scope,
+                ),
+            )
         issuers = {
             document.issuer.casefold()
             for document in self._documents.values()
             if re.search(rf"\b{re.escape(document.issuer)}\b", question, re.IGNORECASE)
         }
+        scopes = {scope.casefold() for scope in SCOPE.findall(question)}
+        if operation is not None and (len(issuers) != 1 or len(scopes) != 1):
+            return abstain("Calculations require one named issuer and one reporting scope.")
+        if operation is not None and self._select_calculation is not None:
+            selected = self._select_calculation(question)
+            if selected is None:
+                return abstain("The source statements did not verify complete, unique operands.")
+            plan, evidence = selected
+            try:
+                calculation = self._calculation(question, operation, plan, evidence)
+            except UnverifiedCalculation as error:
+                return abstain(str(error))
+            return QueryResponse(
+                status="answered", redacted_question=question, calculation=calculation
+            )
         requested_years = _years(question, include_bare=operation is not None)
         pages = {int(page) for page in PDF_PAGE.findall(question)}
         expected_kind = "table" if operation is not None else "text"
@@ -146,6 +201,11 @@ class AnswerService:
         chunks = dict(list(matching.items())[:5])
         if not chunks:
             return abstain("The corpus did not return usable evidence.")
+        if operation is not None:
+            chunks = {
+                chunk.id: verified_financial_header(self._documents[chunk.document_id], chunk)
+                for chunk in chunks.values()
+            }
         context = [
             {
                 "chunk_id": chunk.id,
@@ -218,7 +278,9 @@ class AnswerService:
             matches_revenue = label == "revenue from operations" and "revenue" in query
             if label not in query and not matches_revenue:
                 raise UnverifiedCalculation("the source row does not match the requested metric")
-        requested_years = {f"FY{year}" for year in _years(question, include_bare=True)}
+        parsed = parse_calculation(question)
+        years = parsed.years if parsed else _years(question, include_bare=True)
+        requested_years = {f"FY{year}" for year in years}
         if requested_years and (
             not requested_years.issubset({operand.period for operand in result.operands})
             or result.operands[0].period != max(requested_years)

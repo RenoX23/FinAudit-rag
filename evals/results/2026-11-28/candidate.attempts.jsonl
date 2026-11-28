@@ -1,0 +1,169 @@
+{"event": "complete", "case_id": "calc-01"}
+{"event": "complete", "case_id": "calc-02"}
+{"event": "complete", "case_id": "calc-03"}
+{"event": "complete", "case_id": "calc-04"}
+{"event": "complete", "case_id": "calc-05"}
+{"event": "complete", "case_id": "calc-06"}
+{"event": "complete", "case_id": "calc-07"}
+{"event": "complete", "case_id": "calc-08"}
+{"event": "complete", "case_id": "calc-09"}
+{"event": "complete", "case_id": "calc-10"}
+{"event": "complete", "case_id": "calc-11"}
+{"event": "complete", "case_id": "calc-12"}
+{"event": "complete", "case_id": "calc-13"}
+{"event": "complete", "case_id": "calc-14"}
+{"event": "complete", "case_id": "calc-15"}
+{"event": "complete", "case_id": "calc-16"}
+{"event": "complete", "case_id": "calc-17"}
+{"event": "complete", "case_id": "calc-18"}
+{"event": "complete", "case_id": "calc-19"}
+{"event": "complete", "case_id": "calc-20"}
+{"event": "complete", "case_id": "calc-21"}
+{"event": "complete", "case_id": "calc-22"}
+{"event": "complete", "case_id": "calc-23"}
+{"event": "complete", "case_id": "calc-24"}
+{"event": "complete", "case_id": "calc-25"}
+{"event": "complete", "case_id": "calc-26"}
+{"event": "complete", "case_id": "calc-27"}
+{"event": "complete", "case_id": "calc-28"}
+{"event": "complete", "case_id": "calc-29"}
+{"event": "complete", "case_id": "calc-30"}
+{"event": "complete", "case_id": "fin-01"}
+{"event": "complete", "case_id": "fin-02"}
+{"event": "complete", "case_id": "fin-03"}
+{"event": "complete", "case_id": "fin-04"}
+{"event": "complete", "case_id": "fin-05"}
+{"event": "complete", "case_id": "fin-06"}
+{"event": "complete", "case_id": "fin-07"}
+{"event": "complete", "case_id": "fin-08"}
+{"event": "complete", "case_id": "fin-09"}
+{"event": "complete", "case_id": "fin-10"}
+{"event": "complete", "case_id": "fin-11"}
+{"event": "complete", "case_id": "fin-12"}
+{"event": "complete", "case_id": "fin-13"}
+{"event": "complete", "case_id": "fin-14"}
+{"event": "complete", "case_id": "fin-15"}
+{"event": "complete", "case_id": "fin-16"}
+{"event": "complete", "case_id": "fin-17"}
+{"event": "complete", "case_id": "fin-18"}
+{"event": "complete", "case_id": "fin-19"}
+{"event": "complete", "case_id": "fin-20"}
+{"event": "complete", "case_id": "fin-21"}
+{"event": "complete", "case_id": "fin-22"}
+{"event": "complete", "case_id": "fin-23"}
+{"event": "complete", "case_id": "fin-24"}
+{"event": "complete", "case_id": "fin-25"}
+{"event": "complete", "case_id": "fin-26"}
+{"event": "complete", "case_id": "fin-27"}
+{"event": "complete", "case_id": "fin-28"}
+{"event": "complete", "case_id": "fin-29"}
+{"event": "complete", "case_id": "fin-30"}
+{"event": "response", "case_id": "reg-01", "time_utc": "2026-11-28T15:28:38.360158+00:00", "status": 200, "input_tokens": 2079, "output_tokens": 74}
+{"event": "complete", "case_id": "reg-01"}
+{"event": "response", "case_id": "reg-02", "time_utc": "2026-11-28T15:29:00.397926+00:00", "status": 200, "input_tokens": 1938, "output_tokens": 94}
+{"event": "complete", "case_id": "reg-02"}
+{"event": "response", "case_id": "reg-03", "time_utc": "2026-11-28T15:29:22.249696+00:00", "status": 200, "input_tokens": 1984, "output_tokens": 111}
+{"event": "complete", "case_id": "reg-03"}
+{"event": "response", "case_id": "reg-04", "time_utc": "2026-11-28T15:29:44.583063+00:00", "status": 200, "input_tokens": 2038, "output_tokens": 66}
+{"event": "complete", "case_id": "reg-04"}
+{"event": "response", "case_id": "reg-05", "time_utc": "2026-11-28T15:30:06.481409+00:00", "status": 200, "input_tokens": 2124, "output_tokens": 108}
+{"event": "complete", "case_id": "reg-05"}
+{"event": "response", "case_id": "reg-06", "time_utc": "2026-11-28T15:30:28.421894+00:00", "status": 200, "input_tokens": 1937, "output_tokens": 79}
+{"event": "complete", "case_id": "reg-06"}
+{"event": "response", "case_id": "reg-07", "time_utc": "2026-11-28T15:30:50.211378+00:00", "status": 200, "input_tokens": 1964, "output_tokens": 107}
+{"event": "complete", "case_id": "reg-07"}
+{"event": "response", "case_id": "reg-08", "time_utc": "2026-11-28T15:31:12.395713+00:00", "status": 200, "input_tokens": 2155, "output_tokens": 63}
+{"event": "complete", "case_id": "reg-08"}
+{"event": "response", "case_id": "reg-09", "time_utc": "2026-11-28T15:31:33.745905+00:00", "status": 200, "input_tokens": 2150, "output_tokens": 72}
+{"event": "complete", "case_id": "reg-09"}
+{"event": "response", "case_id": "reg-10", "time_utc": "2026-11-28T15:31:56.026976+00:00", "status": 200, "input_tokens": 2027, "output_tokens": 140}
+{"event": "complete", "case_id": "reg-10"}
+{"event": "response", "case_id": "reg-11", "time_utc": "2026-11-28T15:32:17.862269+00:00", "status": 200, "input_tokens": 2096, "output_tokens": 81}
+{"event": "complete", "case_id": "reg-11"}
+{"event": "response", "case_id": "reg-12", "time_utc": "2026-11-28T15:32:39.401255+00:00", "status": 200, "input_tokens": 2024, "output_tokens": 97}
+{"event": "complete", "case_id": "reg-12"}
+{"event": "response", "case_id": "reg-13", "time_utc": "2026-11-28T15:33:00.811258+00:00", "status": 200, "input_tokens": 1806, "output_tokens": 58}
+{"event": "complete", "case_id": "reg-13"}
+{"event": "response", "case_id": "reg-14", "time_utc": "2026-11-28T15:33:22.564444+00:00", "status": 200, "input_tokens": 1974, "output_tokens": 95}
+{"event": "complete", "case_id": "reg-14"}
+{"event": "response", "case_id": "reg-15", "time_utc": "2026-11-28T15:33:44.436219+00:00", "status": 200, "input_tokens": 2188, "output_tokens": 72}
+{"event": "complete", "case_id": "reg-15"}
+{"event": "response", "case_id": "reg-16", "time_utc": "2026-11-28T15:34:06.010119+00:00", "status": 200, "input_tokens": 2121, "output_tokens": 78}
+{"event": "complete", "case_id": "reg-16"}
+{"event": "response", "case_id": "reg-17", "time_utc": "2026-11-28T15:34:27.735357+00:00", "status": 200, "input_tokens": 2215, "output_tokens": 87}
+{"event": "complete", "case_id": "reg-17"}
+{"event": "response", "case_id": "reg-18", "time_utc": "2026-11-28T15:34:49.355648+00:00", "status": 200, "input_tokens": 1930, "output_tokens": 112}
+{"event": "complete", "case_id": "reg-18"}
+{"event": "response", "case_id": "reg-19", "time_utc": "2026-11-28T15:35:10.900574+00:00", "status": 200, "input_tokens": 1777, "output_tokens": 74}
+{"event": "complete", "case_id": "reg-19"}
+{"event": "response", "case_id": "reg-20", "time_utc": "2026-11-28T15:35:32.778365+00:00", "status": 200, "input_tokens": 1992, "output_tokens": 71}
+{"event": "complete", "case_id": "reg-20"}
+{"event": "response", "case_id": "reg-21", "time_utc": "2026-11-28T15:35:54.359609+00:00", "status": 200, "input_tokens": 2205, "output_tokens": 77}
+{"event": "complete", "case_id": "reg-21"}
+{"event": "response", "case_id": "reg-22", "time_utc": "2026-11-28T15:36:16.154552+00:00", "status": 200, "input_tokens": 2180, "output_tokens": 95}
+{"event": "complete", "case_id": "reg-22"}
+{"event": "response", "case_id": "reg-23", "time_utc": "2026-11-28T15:36:37.971237+00:00", "status": 200, "input_tokens": 2071, "output_tokens": 63}
+{"event": "complete", "case_id": "reg-23"}
+{"event": "response", "case_id": "reg-24", "time_utc": "2026-11-28T15:36:59.977135+00:00", "status": 200, "input_tokens": 2192, "output_tokens": 80}
+{"event": "complete", "case_id": "reg-24"}
+{"event": "response", "case_id": "reg-25", "time_utc": "2026-11-28T15:37:22.142967+00:00", "status": 200, "input_tokens": 2153, "output_tokens": 96}
+{"event": "complete", "case_id": "reg-25"}
+{"event": "response", "case_id": "reg-26", "time_utc": "2026-11-28T15:37:43.652220+00:00", "status": 200, "input_tokens": 2116, "output_tokens": 68}
+{"event": "complete", "case_id": "reg-26"}
+{"event": "response", "case_id": "reg-27", "time_utc": "2026-11-28T15:38:05.520052+00:00", "status": 200, "input_tokens": 2227, "output_tokens": 64}
+{"event": "complete", "case_id": "reg-27"}
+{"event": "response", "case_id": "reg-28", "time_utc": "2026-11-28T15:38:27.738354+00:00", "status": 200, "input_tokens": 1982, "output_tokens": 137}
+{"event": "complete", "case_id": "reg-28"}
+{"event": "response", "case_id": "reg-29", "time_utc": "2026-11-28T15:38:49.676821+00:00", "status": 200, "input_tokens": 2303, "output_tokens": 119}
+{"event": "complete", "case_id": "reg-29"}
+{"event": "response", "case_id": "reg-30", "time_utc": "2026-11-28T15:39:11.593100+00:00", "status": 200, "input_tokens": 2020, "output_tokens": 102}
+{"event": "complete", "case_id": "reg-30"}
+{"event": "response", "case_id": "reg-31", "time_utc": "2026-11-28T15:39:33.859581+00:00", "status": 200, "input_tokens": 2137, "output_tokens": 60}
+{"event": "complete", "case_id": "reg-31"}
+{"event": "response", "case_id": "reg-32", "time_utc": "2026-11-28T15:39:56.260560+00:00", "status": 200, "input_tokens": 2039, "output_tokens": 72}
+{"event": "complete", "case_id": "reg-32"}
+{"event": "response", "case_id": "reg-33", "time_utc": "2026-11-28T15:40:18.282652+00:00", "status": 200, "input_tokens": 2217, "output_tokens": 73}
+{"event": "complete", "case_id": "reg-33"}
+{"event": "response", "case_id": "reg-34", "time_utc": "2026-11-28T15:40:40.164386+00:00", "status": 200, "input_tokens": 2262, "output_tokens": 67}
+{"event": "complete", "case_id": "reg-34"}
+{"event": "response", "case_id": "reg-35", "time_utc": "2026-11-28T15:41:02.777877+00:00", "status": 200, "input_tokens": 2154, "output_tokens": 128}
+{"event": "complete", "case_id": "reg-35"}
+{"event": "complete", "case_id": "unanswerable-01"}
+{"event": "complete", "case_id": "unanswerable-02"}
+{"event": "response", "case_id": "unanswerable-03", "time_utc": "2026-11-28T15:41:28.354932+00:00", "status": 200, "input_tokens": 2156, "output_tokens": 31}
+{"event": "complete", "case_id": "unanswerable-03"}
+{"event": "response", "case_id": "unanswerable-04", "time_utc": "2026-11-28T15:41:50.634001+00:00", "status": 200, "input_tokens": 1775, "output_tokens": 40}
+{"event": "complete", "case_id": "unanswerable-04"}
+{"event": "response", "case_id": "unanswerable-05", "time_utc": "2026-11-28T15:42:12.995061+00:00", "status": 200, "input_tokens": 2305, "output_tokens": 113}
+{"event": "complete", "case_id": "unanswerable-05"}
+{"event": "complete", "case_id": "unanswerable-06"}
+{"event": "response", "case_id": "unanswerable-07", "time_utc": "2026-11-28T15:42:35.307785+00:00", "status": 200, "input_tokens": 2096, "output_tokens": 39}
+{"event": "complete", "case_id": "unanswerable-07"}
+{"event": "response", "case_id": "unanswerable-08", "time_utc": "2026-11-28T15:42:57.941547+00:00", "status": 200, "input_tokens": 2056, "output_tokens": 67}
+{"event": "complete", "case_id": "unanswerable-08"}
+{"event": "response", "case_id": "unanswerable-09", "time_utc": "2026-11-28T15:43:19.614068+00:00", "status": 200, "input_tokens": 1791, "output_tokens": 32}
+{"event": "complete", "case_id": "unanswerable-09"}
+{"event": "response", "case_id": "unanswerable-10", "time_utc": "2026-11-28T15:43:42.063409+00:00", "status": 200, "input_tokens": 2243, "output_tokens": 37}
+{"event": "complete", "case_id": "unanswerable-10"}
+{"event": "response", "case_id": "unanswerable-11", "time_utc": "2026-11-28T15:44:03.919057+00:00", "status": 200, "input_tokens": 1993, "output_tokens": 39}
+{"event": "complete", "case_id": "unanswerable-11"}
+{"event": "response", "case_id": "unanswerable-12", "time_utc": "2026-11-28T15:44:25.400860+00:00", "status": 200, "input_tokens": 2031, "output_tokens": 48}
+{"event": "complete", "case_id": "unanswerable-12"}
+{"event": "response", "case_id": "unanswerable-13", "time_utc": "2026-11-28T15:44:47.203143+00:00", "status": 200, "input_tokens": 1916, "output_tokens": 70}
+{"event": "complete", "case_id": "unanswerable-13"}
+{"event": "complete", "case_id": "unanswerable-14"}
+{"event": "response", "case_id": "unanswerable-15", "time_utc": "2026-11-28T15:45:09.165176+00:00", "status": 200, "input_tokens": 2216, "output_tokens": 42}
+{"event": "complete", "case_id": "unanswerable-15"}
+{"event": "response", "case_id": "unanswerable-16", "time_utc": "2026-11-28T15:45:30.855658+00:00", "status": 200, "input_tokens": 2150, "output_tokens": 39}
+{"event": "complete", "case_id": "unanswerable-16"}
+{"event": "complete", "case_id": "unanswerable-17"}
+{"event": "response", "case_id": "unanswerable-18", "time_utc": "2026-11-28T15:45:53.143488+00:00", "status": 200, "input_tokens": 1960, "output_tokens": 44}
+{"event": "complete", "case_id": "unanswerable-18"}
+{"event": "response", "case_id": "unanswerable-19", "time_utc": "2026-11-28T15:46:14.875410+00:00", "status": 200, "input_tokens": 2152, "output_tokens": 41}
+{"event": "complete", "case_id": "unanswerable-19"}
+{"event": "complete", "case_id": "unanswerable-20"}
+{"event": "complete", "case_id": "unanswerable-21"}
+{"event": "complete", "case_id": "unanswerable-22"}
+{"event": "complete", "case_id": "unanswerable-23"}
+{"event": "complete", "case_id": "unanswerable-24"}
+{"event": "complete", "case_id": "unanswerable-25"}

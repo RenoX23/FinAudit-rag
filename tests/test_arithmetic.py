@@ -1,13 +1,62 @@
+from dataclasses import replace
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
+from finaudit_rag.answer_service import _source_text
 from finaudit_rag.arithmetic import CellReference, UnverifiedCalculation, calculate
+from finaudit_rag.corpus import load_manifest
+from finaudit_rag.financial_headers import verified_financial_header
 from finaudit_rag.ingestion import Chunk, Table
 
 SOURCE = "filing:264:table:0"
 PROFIT = ("Operating profit", "30,880", "28,813")
 REVENUE = ("Revenue from operations 2.18", "1,36,592", "1,28,933")
+
+
+def test_verified_source_uses_annual_columns_and_rejects_quarters() -> None:
+    source = next(
+        item for item in load_manifest(Path("data/corpus.json")) if item.id == "tcs-fy25-q4"
+    )
+    chunk = Chunk(
+        "tcs-fy25-q4:7:table:0",
+        source.id,
+        7,
+        "table",
+        "Revenue from operations",
+        Table(
+            (
+                "Audited Consolidated Statement of Financial Results",
+                "Three months ended Year ended",
+            ),
+            (
+                "Line item",
+                "March 31, 2025 (column 1)",
+                "December 31, 2024 (column 2)",
+                "March 31, 2024 (column 3)",
+                "March 31, 2025 (column 4)",
+                "March 31, 2024 (column 5)",
+            ),
+            (
+                ("Revenue from operations", "64,479", "63,973", "61,237", "2,55,324", "2,40,893"),
+                ("Account number", "", "", "", "123456789", "987654321"),
+            ),
+        ),
+    )
+    verified = verified_financial_header(source, chunk)
+    evidence = _source_text(verified)
+    assert "4=2025 | 5=2024" in evidence
+    assert "4=2,55,324 | 5=2,40,893" in evidence
+    assert "64,479" not in evidence
+    assert "Account number" not in evidence
+    assert "123456789" not in evidence
+    cells = {chunk.id: verified}
+    result = calculate("yoy_change", [CellReference(chunk.id, 0, n) for n in (4, 5)], cells)
+    assert result.result == Decimal("5.99")
+    with pytest.raises(UnverifiedCalculation, match="financial year"):
+        calculate("yoy_change", [CellReference(chunk.id, 0, n) for n in (1, 3)], cells)
+    assert verified_financial_header(replace(source, sha256="0" * 64), chunk) is chunk
 
 
 def make_evidence(
